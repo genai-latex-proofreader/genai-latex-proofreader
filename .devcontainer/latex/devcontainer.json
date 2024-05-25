@@ -1,22 +1,23 @@
 {
-    "name": "genai-latex-proofreader-setup",
-    "dockerComposeFile": [
-      "docker-compose.yml"
-    ],
-    "service": "genai-latex-proofreader-service",
-    "workspaceFolder": "/repo_root/",
-    "customizations": {
-      "vscode": {
-        "extensions": [
-          "ms-vscode.makefile-tools",
-          "ms-azuretools.vscode-docker",
-          "ms-python.black-formatter",
-          "ms-python.isort",
-          "james-yu.latex-workshop",
-          "GitHub.copilot-chat",
-          "GitHub.codespaces",
-          "GitHub.copilot"
-        ]
-      }
+  "name": "genai-latex-proofreader-setup",
+  "dockerComposeFile": [
+    "docker-compose.yml"
+  ],
+  "service": "genai-latex-proofreader-service",
+  "workspaceFolder": "/repo_root/",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.makefile-tools",
+        "ms-azuretools.vscode-docker",
+        "ms-python.black-formatter",
+        "ms-python.isort",
+        "james-yu.latex-workshop",
+        "GitHub.copilot-chat",
+        "GitHub.codespaces",
+        "GitHub.copilot",
+        "ms-python.python"
+      ]
     }
   }
+}

@@ -6,8 +6,8 @@ USER root
 
 ENV DEBIAN_FRONTEND "noninteractive"
 RUN apt-get -qq -y update && \
-    apt-get -qq -y upgrade && \
-    apt-get install -qq -y --no-install-recommends \
+        apt-get -qq -y upgrade && \
+        apt-get install -qq -y --no-install-recommends \
         make \
         jq \
         git \
@@ -38,13 +38,13 @@ RUN apt-get install -qq -y --no-install-recommends \
         cpanminus
 
 RUN cd /tmp && \
-    wget --quiet https://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz && \
-    zcat < install-tl-unx.tar.gz | tar xf - && \
-    TEXLIVE_YEAR=$(date +%Y) && \
-    cd install-tl-${TEXLIVE_YEAR}* && \
-    export TEXLIVE_INSTALL_NO_CONTEXT_CACHE=1 && \
-    export TEXLIVE_INSTALL_NO_WELCOME=1 && \
-    perl ./install-tl \
+        wget --quiet https://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz && \
+        zcat < install-tl-unx.tar.gz | tar xf - && \
+        TEXLIVE_YEAR=$(date +%Y) && \
+        cd install-tl-${TEXLIVE_YEAR}* && \
+        export TEXLIVE_INSTALL_NO_CONTEXT_CACHE=1 && \
+        export TEXLIVE_INSTALL_NO_WELCOME=1 && \
+        perl ./install-tl \
         --no-interaction \
         --scheme=basic
 
@@ -76,4 +76,5 @@ COPY requirements.txt /dev-setup/
 RUN pip install --break-system-packages \
         -r /dev-setup/requirements.txt
 
-COPY entry.sh /dev-setup/
+# Set location of __cache__ directories
+ENV PYTHONPYCACHEPREFIX=/dev-setup/.cache/python
