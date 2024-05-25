@@ -1,0 +1,10 @@
+# --- LLM interfaces ---
+anthropic==0.21.3
+
+# --- code formatting and testing ---
+pytest==8.1.1
+
+# Note that black should ideally be the same version used by black VS Code plugin
+# https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter
+# The plugin (which installs black independently) is black-formatting on-save.
+black==24.2.0

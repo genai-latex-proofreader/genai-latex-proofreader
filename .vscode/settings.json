@@ -1,0 +1,13 @@
+{
+    "editor.rulers": [
+        88,
+    ],
+    "workbench.colorCustomizations": {
+        "editor.lineHighlightBackground": "#304f6a"
+    },
+    "editor.renderWhitespace": "all",
+    "editor.wordWrap": "wordWrapColumn",
+    "editor.wrappingIndent": "indent",
+    "editor.formatOnSave": true,
+    "editor.wordWrapColumn": 88,
+}
