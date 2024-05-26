@@ -8,8 +8,10 @@ services:
       dockerfile: Dockerfile
 
     volumes:
-    - ../..:/repo_root
+      - ../..:/repo_root
 
     entrypoint: "tail -f /dev/null"
+
+    working_dir: /repo_root
 
     hostname: genai-latex-proofreader
