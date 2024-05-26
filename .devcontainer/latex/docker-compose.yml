@@ -1,5 +1,3 @@
-version: "3"
-
 services:
   genai-latex-proofreader-service:
     image: genai-latex-proofreader-docker

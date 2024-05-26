@@ -1,7 +1,9 @@
 build:
+	docker --version
 	docker compose build genai-latex-proofreader-service
 
 in-docker/run-make:
+	docker --version
 	docker compose run \
 	    --entrypoint "make" \
 	    genai-latex-proofreader-service \

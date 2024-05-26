@@ -1,4 +1,4 @@
-name: "ci: Test python code"
+name: "ci: Run automated tests"
 
 on:
   workflow_dispatch:
