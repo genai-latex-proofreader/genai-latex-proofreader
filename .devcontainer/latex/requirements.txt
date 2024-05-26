@@ -8,6 +8,10 @@ pytest==8.2.1
 # https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter
 black==24.4.2
 
+# 'mypy' Python package used by "ms-python.mypy-type-checker" (as of 2024.05.26)
+# https://marketplace.visualstudio.com/items?itemName=ms-python.mypy-type-checker
+mypy==1.8.0
+
 # 'isort' Python package used by "ms-python.isort" (as of 2024.05.25)
 # https://marketplace.visualstudio.com/items?itemName=ms-python.isort
 isort==5.11.5

@@ -1,3 +1,5 @@
+from typing import Callable
+
 import pytest
 
 from genai_latex_proofreader.utils import (
@@ -37,7 +39,7 @@ def test_compose_fails_with_zero_input_functions():
 
 
 def test_split_at_first_lambda():
-    def split_after(x0: int) -> int | None:
+    def split_after(x0: int):
         def split(x):
             if x >= x0:
                 return x

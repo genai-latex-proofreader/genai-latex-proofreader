@@ -1,22 +1,39 @@
 {
+    // Editor appearance
     "editor.rulers": [
-        88,
+        88
     ],
     "workbench.colorCustomizations": {
-        "editor.lineHighlightBackground": "#304f6a"
+        "editor.lineHighlightBackground": "#403a57"
     },
     "editor.renderWhitespace": "all",
-    "editor.wordWrap": "wordWrapColumn",
-    "editor.wrappingIndent": "indent",
     "editor.formatOnSave": true,
+    // Word wrap: default setting
+    "editor.wordWrap": "wordWrapColumn",
     "editor.wordWrapColumn": 88,
+    "editor.wrappingIndent": "indent",
+    // Python settings
+    "python.analysis.autoImportCompletions": true,
+    "black-formatter.importStrategy": "useBundled",
+    "python.analysis.typeCheckingMode": "standard",
     "[python]": {
+        // Word wrap: Python files
+        "editor.wordWrap": "off",
+        "editor.wordWrapColumn": 88,
+        "editor.wrappingIndent": "none",
+        // ---
         "editor.defaultFormatter": "ms-python.black-formatter",
         "editor.formatOnSave": true
-        "editor.codeActionsOnSave": {
-            "source.organizeImports": "always"
-        },
     },
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "always"
+    },
+    "mypy-type-checker.path": [
+        "/usr/local/bin/mypy"
+    ],
+    "isort.interpreter": [
+        "/usr/bin/python3"
+    ],
     "isort.args": [
         "--profile",
         "black"

@@ -24,7 +24,7 @@ class LatexDocument:
 
     # --- \begin{document} ---
 
-    begin_document: str
+    begin_document: list[str]
 
     # Note:
     #   \begin{abstract} ... \end{abstract} is in "begin_document"
@@ -44,7 +44,7 @@ class LatexDocument:
 
 def to_latex(obj: LatexDocument | LatexSection | LatexSections) -> str:
     """
-    Convert a parsed LaTeX document back into a LaTeX document
+    Convert a parsed LaTeX document back into a LaTeX document string.
     """
 
     def _to_latex(obj):

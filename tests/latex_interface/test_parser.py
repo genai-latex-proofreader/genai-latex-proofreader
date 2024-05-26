@@ -1,4 +1,5 @@
 import uuid
+from typing import Iterable
 
 from genai_latex_proofreader.latex_interface.data_model import to_latex
 from genai_latex_proofreader.latex_interface.parser import (
@@ -55,12 +56,14 @@ def test_latex_parser_and_conversion_back_to_latex():
     assert TEST_DOC == to_latex(parse_from_latex(TEST_DOC))
 
 
-def generate_sections(initial_rows: int, nr_sections: int, nr_rows_per_section: int):
-    def random_lines(nr_lines: int):
+def generate_sections(
+    initial_rows: int, nr_sections: int, nr_rows_per_section: int
+) -> Iterable[str]:
+    def random_lines(nr_lines: int) -> Iterable[str]:
         for _ in range(nr_lines):
             yield f"{uuid.uuid4()}"
 
-    def section_content(nr_rows: int):
+    def section_content(nr_rows: int) -> Iterable[str]:
         yield r"\section{Section %s}" % uuid.uuid4()
         yield from random_lines(nr_rows)
 
@@ -75,8 +78,7 @@ def test_parse_section():
     for pre_section_lines_count in range(3):
         for sections_nr in range(3):
             for nr_rows_per_section in range(3):
-
-                sections_lines: list[str] = list(
+                sections_lines = list(
                     generate_sections(
                         pre_section_lines_count,
                         sections_nr,

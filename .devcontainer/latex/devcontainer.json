@@ -16,7 +16,8 @@
         "GitHub.copilot-chat",
         "GitHub.codespaces",
         "GitHub.copilot",
-        "ms-python.python"
+        "ms-python.python",
+        "ms-python.mypy-type-checker"
       ]
     }
   }

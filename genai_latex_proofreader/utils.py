@@ -1,11 +1,11 @@
-from typing import Callable, Optional, Sequence, TypeVar
+from typing import Callable, Optional, TypeVar
 
 A = TypeVar("A")
 B = TypeVar("B")
 
 
 def split_at_first_lambda(
-    xs: Sequence[A], f: Callable[[A], Optional[B]]
+    xs: list[A], f: Callable[[A], Optional[B]]
 ) -> tuple[list[A], Optional[B], list[A]]:
     """
     Partition an input list 'xs' at point where 'f' first returns a non-null value.
@@ -73,7 +73,7 @@ def split_list_at_lambda(
     return xs_head, [(b, xs_tail_head), *remaining_splits]
 
 
-def compose(*fs: Sequence[Callable[[A], A]]) -> Callable[[A], A]:
+def compose(*fs: Callable[[A], A]) -> Callable[[A], A]:
     """
     Compose multiple functions (of type A -> A) into into a single function A -> A.
 
