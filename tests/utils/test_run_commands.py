@@ -2,22 +2,23 @@ from pathlib import Path
 
 import pytest
 
-from genai_latex_proofreader.command_runner import CommandResult, run_commands
+from genai_latex_proofreader.utils.run_commands import CommandResult, run_commands
 
 
 def test_run_commands_all_success():
     assert run_commands({}, ["echo '123'", "echo '456'"]) == [
-        CommandResult(stdout="123", stderr="", returncode=0),
-        CommandResult(stdout="456", stderr="", returncode=0),
+        CommandResult(stdout="123", stderr="", returncode=0, output_files={}),
+        CommandResult(stdout="456", stderr="", returncode=0, output_files={}),
     ]
 
 
 def test_run_commands_execution_stops_on_first_failure():
+    files = {
+        Path("file1.txt"): "Hello, World!".encode(encoding="utf-8"),
+        Path("file2.txt"): bytes([1, 2, 3]),
+    }
     results = run_commands(
-        {
-            Path("file1.txt"): "Hello, World!",
-            Path("file2.txt"): bytes([1, 2, 3]),
-        },
+        files,
         [
             "cat file1.txt",
             "cat file2.txt",
@@ -27,12 +28,17 @@ def test_run_commands_execution_stops_on_first_failure():
     )
 
     assert results == [
-        CommandResult(stdout="Hello, World!", stderr="", returncode=0),
-        CommandResult(stdout="\x01\x02\x03", stderr="", returncode=0),
+        CommandResult(
+            stdout="Hello, World!", stderr="", returncode=0, output_files=files
+        ),
+        CommandResult(
+            stdout="\x01\x02\x03", stderr="", returncode=0, output_files=files
+        ),
         CommandResult(
             stdout="",
             stderr="cat: file-does-not-exist.txt: No such file or directory",
             returncode=1,
+            output_files=files,
         ),
     ]
 

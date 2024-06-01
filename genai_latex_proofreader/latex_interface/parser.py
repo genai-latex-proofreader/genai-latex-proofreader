@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Callable, Optional, Tuple
 
-from genai_latex_proofreader.utils import (
+from genai_latex_proofreader.utils.splitters import (
     split_at_first_lambda,
     split_list_at_lambda,
     split_list_at_lambdas,
