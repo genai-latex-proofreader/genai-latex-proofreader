@@ -8,6 +8,8 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
+from .io import read_directory, write_directory
+
 
 @dataclass(frozen=True)
 class CommandResult:
@@ -22,17 +24,11 @@ def _execute_command(command: str, cwd: Path) -> CommandResult:
         command, shell=True, capture_output=True, text=True, cwd=cwd, check=False
     )
 
-    # Recursively get all files under cwd
-    output_files = {}
-    for file_path in cwd.glob("**/*"):
-        if file_path.is_file():
-            output_files[file_path.relative_to(cwd)] = file_path.read_bytes()
-
     command_result = CommandResult(
         stdout=result.stdout.strip(),
         stderr=result.stderr.strip(),
         returncode=result.returncode,
-        output_files=output_files,
+        output_files=read_directory(cwd),
     )
     if command_result.stderr != "" and command_result.returncode == 0:
         print(
