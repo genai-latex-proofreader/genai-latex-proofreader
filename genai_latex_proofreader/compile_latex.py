@@ -15,7 +15,7 @@ def _compile_commands(path: Path) -> list[str]:
     """
     return [
         f"pdflatex -interaction=nonstopmode {path}",
-        f"bibtex {path.with_suffix('.aux')}",
+        f"bibtex {path.with_suffix('.aux')} || true",
         f"pdflatex -interaction=nonstopmode {path}",
         f"pdflatex -interaction=nonstopmode {path}",
     ]

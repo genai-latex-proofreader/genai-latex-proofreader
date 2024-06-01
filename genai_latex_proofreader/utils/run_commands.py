@@ -66,11 +66,7 @@ def run_commands(files: dict[Path, bytes], commands: list[str]) -> list[CommandR
     with tempfile.TemporaryDirectory() as _temp_dir:
         temp_path: Path = Path(_temp_dir)
 
-        for file_path, content in files.items():
-            if isinstance(content, bytes):
-                (temp_path / file_path).write_bytes(content)
-            else:
-                raise Exception(f"Unknown type of content {type(content)}")
+        write_directory(files, temp_path)
 
         def _get_results():
             for command in commands:
