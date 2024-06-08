@@ -58,7 +58,21 @@ def _create_line_match_detector(
     return f
 
 
-def _extract_sections(lines: list[str]) -> LatexSections:
+def _extract_label(lines: list[str]) -> Optional[str]:
+    r"""
+    Find first label (eg \label{mylabel}) before any subsections, or subsubsections.
+    If no label is found, return None
+    """
+    for line in lines:
+        if line.startswith(r"\label"):
+            return _parse_arg_to_latex_command(r"\label", line)
+        elif line.startswith(r"\subsection") or line.startswith(r"\subsubsection"):
+            break
+
+    return None
+
+
+def _extract_sections(lines: list[str], is_appendix: bool) -> LatexSections:
     """
     Internal function to extract sections from a list of lines.
     """
@@ -72,9 +86,15 @@ def _extract_sections(lines: list[str]) -> LatexSections:
                 title=_parse_arg_to_latex_command(
                     r"\section", new_section_line.matched_line
                 ),
+                label=_extract_label(section_lines),
+                generated_label=(
+                    f"genai:generated:appendix:section:label:{section_idx}"
+                    if is_appendix
+                    else f"genai:generated:section:label:{section_idx}"
+                ),
                 content=section_lines,
             )
-            for new_section_line, section_lines in sections
+            for section_idx, (new_section_line, section_lines) in enumerate(sections)
         ],
     )
 
@@ -90,11 +110,11 @@ def _parse_content_to_sections(
         # no
         assert len(post_appendix_lines) == 0
         assert lines == pre_appendix_lines
-        return _extract_sections(lines), None
+        return _extract_sections(lines, is_appendix=False), None
     else:
         return (
-            _extract_sections(pre_appendix_lines),
-            _extract_sections(post_appendix_lines),
+            _extract_sections(pre_appendix_lines, is_appendix=False),
+            _extract_sections(post_appendix_lines, is_appendix=True),
         )
 
 

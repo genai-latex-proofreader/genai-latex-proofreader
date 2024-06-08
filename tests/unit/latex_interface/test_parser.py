@@ -29,10 +29,13 @@ My abstract
 Suppose $g$ is a pseudo-Riemann metric on a smooth $4$-manifold $N$.
 
 \section{The main theorem}
+\label{sec:main:theorem}
 Some more text
 
 \section{Conclusions}
+\label{sec:conclusions}
 \section{More conclusions}
+\label{sec:more:conclusions}
 
 \appendix
 
@@ -56,6 +59,22 @@ def test_latex_parser_and_conversion_back_to_latex():
     assert TEST_DOC == to_latex(parse_from_latex(TEST_DOC))
 
 
+def test_latex_parser_and_conversion_back_to_latex_without_labels():
+    # as above, but modify input to have no section labels
+    def remove_labels(doc: str) -> str:
+        return "\n".join(
+            line for line in doc.split("\n") if not line.startswith(r"\label")
+        )
+
+    def only_labels(doc: str) -> list[str]:
+        return [line for line in doc.split("\n") if line.startswith(r"\label")]
+
+    output: str = to_latex(parse_from_latex(remove_labels(TEST_DOC)))
+
+    assert remove_labels(output) == remove_labels(TEST_DOC)
+    assert len(set(only_labels(output))) == 5  # 4 sections + 1 section in appendix
+
+
 def generate_sections(
     initial_rows: int, nr_sections: int, nr_rows_per_section: int
 ) -> Iterable[str]:
@@ -64,7 +83,14 @@ def generate_sections(
             yield f"{uuid.uuid4()}"
 
     def section_content(nr_rows: int) -> Iterable[str]:
-        yield r"\section{Section %s}" % uuid.uuid4()
+        section_title = f"Section {uuid.uuid4()}"
+        yield rf"\section{{{section_title}}}"
+        yield from random_lines(nr_rows)
+        section_label = f"sec:{uuid.uuid4()}"
+        yield rf"\label{{{section_label}}}"
+        yield r"\subsection{A subsection}"
+        subsection_label = f"sec:{uuid.uuid4()}"
+        yield rf"\label{{{subsection_label}}}"
         yield from random_lines(nr_rows)
 
     yield from random_lines(initial_rows)
@@ -87,7 +113,7 @@ def test_parse_section():
                 )
 
                 assert (
-                    to_latex(_extract_sections(sections_lines))
+                    to_latex(_extract_sections(sections_lines, is_appendix=False))
                     # -
                     == "\n".join(sections_lines)
                 )

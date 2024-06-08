@@ -7,7 +7,8 @@ from typing import Optional
 @dataclass(frozen=True)
 class LatexSection:
     title: str
-    # TODO: label
+    label: Optional[str]
+    generated_label: str
     content: list[str]
 
 
@@ -49,8 +50,10 @@ def to_latex(obj: LatexDocument | LatexSection | LatexSections) -> str:
 
     def _to_latex(obj):
         match obj:
-            case LatexSection(title, content):
+            case LatexSection(title, label, generated_label, content):
                 yield rf"\section{{{title}}}"
+                if label is None:
+                    yield rf"\label{{{generated_label}}}"
                 yield from content
 
             case LatexSections(pre_sections, sections):
