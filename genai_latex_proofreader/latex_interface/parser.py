@@ -176,9 +176,9 @@ def parse_from_latex(input_latex: str) -> LatexDocument:
         bibliography=[slash_bibliography_line.matched_line, *post_bibliography_lines],
     )
 
-    # Raise exception if there are duplicate labels among sections (incl. Appendix
-    # sections). Also check that input document does not use same
-    # labels as generated ones.
+    # Raise exception if there are duplicate labels in the sections (incl. Appendix
+    # sections). Also check that input document does not contain same the
+    # labels as (our internal) generated labels.
     def _get_labels() -> Iterable[str]:
         for section in main_document.sections:
             yield from section.labels()
