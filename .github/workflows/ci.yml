@@ -34,6 +34,6 @@ jobs:
         run: |
           (cd .devcontainer/latex; make in-docker/run-make MAKE_TASK="run-mypy")
 
-      - name: Check tests using pytest
+      - name: Run pytest unit tests
         run: |
-          (cd .devcontainer/latex; make in-docker/run-make MAKE_TASK="run-pytest")
+          (cd .devcontainer/latex; make in-docker/run-make MAKE_TASK="run-unit-tests")
