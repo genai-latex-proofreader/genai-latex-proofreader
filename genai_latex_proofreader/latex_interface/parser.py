@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-from typing import Callable, Optional, Tuple
+from ftplib import all_errors
+from typing import Callable, Iterable, Optional, Tuple
 
 from genai_latex_proofreader.utils.splitters import (
     split_at_first_lambda,
@@ -72,6 +73,13 @@ def _extract_label(lines: list[str]) -> Optional[str]:
     return None
 
 
+def _generated_label(section_idx: int, is_appendix: bool) -> str:
+    if is_appendix:
+        return f"sec:genai:generated:label:appendix:{section_idx}"
+
+    return f"sec:genai:generated:label:{section_idx}"
+
+
 def _extract_sections(lines: list[str], is_appendix: bool) -> LatexSections:
     """
     Internal function to extract sections from a list of lines.
@@ -87,10 +95,8 @@ def _extract_sections(lines: list[str], is_appendix: bool) -> LatexSections:
                     r"\section", new_section_line.matched_line
                 ),
                 label=_extract_label(section_lines),
-                generated_label=(
-                    f"genai:generated:appendix:section:label:{section_idx}"
-                    if is_appendix
-                    else f"genai:generated:section:label:{section_idx}"
+                generated_label=_generated_label(
+                    section_idx=section_idx, is_appendix=is_appendix
                 ),
                 content=section_lines,
             )
@@ -162,10 +168,29 @@ def parse_from_latex(input_latex: str) -> LatexDocument:
     # Parse sections and any sections in the appendix
     main_document, optional_appendix = _parse_content_to_sections(post_maketitle_lines)
 
-    return LatexDocument(
+    result = LatexDocument(
         pre_matter=[slash_documentclass_line.matched_line, *post_documentclass_lines],
         begin_document=post_begin_document_lines,
         main_document=main_document,
         appendix=optional_appendix,
         bibliography=[slash_bibliography_line.matched_line, *post_bibliography_lines],
     )
+
+    # Raise exception if there are duplicate labels among sections (incl. Appendix
+    # sections). Also check that input document does not use same
+    # labels as generated ones.
+    def _get_labels() -> Iterable[str]:
+        for section in main_document.sections:
+            yield from section.labels()
+
+        if optional_appendix is not None:
+            for section in optional_appendix.sections:
+                yield from section.labels()
+
+    if len(list(_get_labels())) != len(set(list(_get_labels()))):
+        raise Exception(
+            "Duplicate labels detected among sections. Please fix. "
+            f"Current labels: {_get_labels()}."
+        )
+
+    return result

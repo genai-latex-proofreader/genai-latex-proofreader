@@ -1,6 +1,8 @@
 import uuid
 from typing import Iterable
 
+import pytest
+
 from genai_latex_proofreader.latex_interface.data_model import to_latex
 from genai_latex_proofreader.latex_interface.parser import (
     _extract_sections,
@@ -55,8 +57,24 @@ The result follows since $x^2 + y^2 = 1$
 \end{document}"""
 
 
+def remove_generated_labels(doc: str) -> str:
+    return "\n".join(
+        line
+        for line in doc.split("\n")
+        if not r"\label{sec:genai:generated:label" in line
+    )
+
+
 def test_latex_parser_and_conversion_back_to_latex():
-    assert TEST_DOC == to_latex(parse_from_latex(TEST_DOC))
+    assert TEST_DOC == remove_generated_labels(to_latex(parse_from_latex(TEST_DOC)))
+
+
+def test_latex_parser_fail_if_duplicate_labels():
+    with pytest.raises(Exception):
+        parse_from_latex(
+            # create latex document with two sections with label "sec:introduction"
+            TEST_DOC.replace(r"{sec:main:theorem}", r"{sec:introduction}")
+        )
 
 
 def test_latex_parser_and_conversion_back_to_latex_without_labels():
@@ -113,7 +131,9 @@ def test_parse_section():
                 )
 
                 assert (
-                    to_latex(_extract_sections(sections_lines, is_appendix=False))
+                    remove_generated_labels(
+                        to_latex(_extract_sections(sections_lines, is_appendix=False))
+                    )
                     # -
                     == "\n".join(sections_lines)
                 )
@@ -189,4 +209,7 @@ My abstract
                         ]
                     )
 
-                    assert to_latex(parse_from_latex(latex_doc)) == latex_doc
+                    assert (
+                        remove_generated_labels(to_latex(parse_from_latex(latex_doc)))
+                        == latex_doc
+                    )
