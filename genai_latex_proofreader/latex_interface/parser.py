@@ -128,8 +128,10 @@ def parse_from_latex(input_latex: str) -> LatexDocument:
     """
     Main interface to parse an input LaTeX document into LatexDocument data model
     """
-    latex_document: list[str] = [line.strip() for line in input_latex.split("\n")]
-    print(f" - Read {len(latex_document)} lines")
+    latex_document: list[str] = [
+        line.strip() for line in input_latex.split("\n") if not line.startswith("%")
+    ]
+    print(f" - Read {len(latex_document)} lines (after removing comment lines)")
 
     no_content, splits = split_list_at_lambdas(
         latex_document,
