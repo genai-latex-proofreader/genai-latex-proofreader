@@ -1,5 +1,3 @@
-import pytest
-
 from genai_latex_proofreader.utils.splitters import (
     split_at_first_lambda,
     split_list_at_lambda,
@@ -56,18 +54,36 @@ def test_split_list_at_lambdas_with_one_entry():
 def test_split_list_at_lambdas_multiple_splits():
     xs = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
     split_lambdas = [
-        lambda x: "split1" if x == 3 else None,
-        lambda x: "split2" if x == 6 else None,
-        lambda x: "split3" if x == 8 else None,
-        lambda x: "split4" if x == 10 else None,
+        lambda x: "match-3" if x == 3 else None,
+        lambda x: "match-6" if x == 6 else None,
+        lambda x: "match-8" if x == 8 else None,
+        lambda x: "match-10" if x == 10 else None,
     ]
     assert split_list_at_lambdas(xs, split_lambdas) == (
         [1, 2],
         [
-            ("split1", [4, 5]),
-            ("split2", [7]),
-            ("split3", [9]),
-            ("split4", [11]),
+            ("match-3", [4, 5]),
+            ("match-6", [7]),
+            ("match-8", [9]),
+            ("match-10", [11]),
+        ],
+    )
+
+
+def test_split_list_at_lambdas_multiple_splits_with_optional_lambda():
+    xs = [1, 2, 3, 4, 5, 6, 7, 9, 10, 11]
+    split_lambdas = [
+        lambda x: "match-3" if x == 3 else None,
+        lambda x: "match-6" if x == 6 else None,
+        lambda x: "match-8" if x == 8 else None,  # <- no match
+        lambda x: "match-10" if x == 10 else None,
+    ]
+    assert split_list_at_lambdas(xs, split_lambdas) == (
+        [1, 2],
+        [
+            ("match-3", [4, 5]),
+            ("match-6", [7, 9]),
+            ("match-10", [11]),
         ],
     )
 
@@ -75,9 +91,8 @@ def test_split_list_at_lambdas_multiple_splits():
 def test_split_list_at_lambdas():
     xs = [1, 2, 3]
 
-    # no split found in non-empty list => exception
-    with pytest.raises(Exception):
-        split_list_at_lambdas(xs, [lambda _: None])
+    # no split found in non-empty list => ok, no split
+    assert split_list_at_lambdas(xs, [lambda _: None]) == (xs, [])
 
     # no lambdas in non-empty list => ok, no split
     assert split_list_at_lambdas(xs, split_lambdas=[]) == (xs, [])

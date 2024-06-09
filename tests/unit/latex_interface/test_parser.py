@@ -5,6 +5,7 @@ import pytest
 
 from genai_latex_proofreader.latex_interface.data_model import to_latex
 from genai_latex_proofreader.latex_interface.parser import (
+    BIBLIOGRAPHY_STARTS,
     _extract_sections,
     parse_from_latex,
 )
@@ -51,9 +52,6 @@ Appendix section introduction
 The result follows since $x^2 + y^2 = 1$
 \end{proof}
 
-\bibliography{refs}
-\bibliographystyle{amsalpha}
-
 \end{document}"""
 
 
@@ -67,6 +65,19 @@ def remove_generated_labels(doc: str) -> str:
 
 def test_latex_parser_and_conversion_back_to_latex():
     assert TEST_DOC == remove_generated_labels(to_latex(parse_from_latex(TEST_DOC)))
+
+
+@pytest.mark.parametrize(
+    "bibliography_contents",
+    [f"{s}\n..." for s in BIBLIOGRAPHY_STARTS] + [""],
+)
+def test_latex_parser_and_conversion_back_to_latex_with_optional_bibliography(
+    bibliography_contents: str,
+):
+    test_doc = TEST_DOC.replace(
+        r"\end{document}", bibliography_contents + "\n" + r"\end{document}"
+    )
+    assert test_doc == remove_generated_labels(to_latex(parse_from_latex(test_doc)))
 
 
 def test_latex_parser_fail_if_duplicate_labels():
@@ -139,7 +150,9 @@ def test_parse_section():
                 )
 
 
-def test_parse_whole_latex_document():
+@pytest.mark.parametrize("include_appendix", [True, False])
+@pytest.mark.parametrize("include_bibliograpy", [True, False])
+def test_parse_whole_latex_document(include_appendix: bool, include_bibliograpy: bool):
 
     DOC_TOP = r"""\documentclass[12pt, a4paper, twoside]{amsart}
 
@@ -165,51 +178,46 @@ My abstract
 
     # ... sections/content in appendix ...
 
-    DOC_END = r"""\bibliography{refs}
-\bibliographystyle{amsalpha}
-
-\end{document}"""
+    BIBLIOGRAPHY = r"""\bibliography{refs}
+\bibliographystyle{amsalpha}"""
 
     for pre_section_lines_count in range(3):
         for sections_nr in range(3):
             for nr_rows_per_section in range(3):
-                for include_appendix in [True, False]:
+                sections_lines: list[str] = list(
+                    generate_sections(
+                        pre_section_lines_count,
+                        sections_nr,
+                        nr_rows_per_section,
+                    )
+                )
 
-                    sections_lines: list[str] = list(
-                        generate_sections(
+                if include_appendix:
+                    potential_appendix = [
+                        r"\appendix",
+                        *generate_sections(
                             pre_section_lines_count,
                             sections_nr,
                             nr_rows_per_section,
-                        )
-                    )
+                        ),
+                    ]
+                else:
+                    potential_appendix = []
 
-                    if include_appendix:
-                        potential_appendix = [
-                            r"\appendix",
-                            *(
-                                generate_sections(
-                                    pre_section_lines_count,
-                                    sections_nr,
-                                    nr_rows_per_section,
-                                )
-                            ),
-                        ]
-                    else:
-                        potential_appendix = []
+                latex_doc = "\n".join(
+                    [
+                        DOC_TOP,
+                        r"\begin{document}",
+                        DOC_ABSTRACT,
+                        r"\maketitle",
+                        *sections_lines,
+                        *potential_appendix,
+                        *[BIBLIOGRAPHY if include_bibliograpy else ""],
+                        r"""\end{document}""",
+                    ]
+                )
 
-                    latex_doc = "\n".join(
-                        [
-                            DOC_TOP,
-                            r"\begin{document}",
-                            DOC_ABSTRACT,
-                            r"\maketitle",
-                            *sections_lines,
-                            *potential_appendix,
-                            DOC_END,
-                        ]
-                    )
-
-                    assert (
-                        remove_generated_labels(to_latex(parse_from_latex(latex_doc)))
-                        == latex_doc
-                    )
+                assert (
+                    remove_generated_labels(to_latex(parse_from_latex(latex_doc)))
+                    == latex_doc
+                )

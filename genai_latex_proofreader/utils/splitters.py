@@ -40,7 +40,8 @@ def split_list_at_lambdas(
         the lambdas in 'split_lambdas' and the corresponding split lists.
 
     Notes: In 'xs', the entries where lambdas are non-NULL must appear in the same
-    order as the lambdas. If this is not the case, the function raises an Exception.
+    order as the lambdas. If a lambda does not return a non-NULL value, the split
+    will not occur and the next lambda will be used to determine the split point.
     """
     if len(split_lambdas) == 0:
         return xs, []
@@ -49,8 +50,10 @@ def split_list_at_lambdas(
     xs_head, b, xs_tail = split_at_first_lambda(xs, head_lambda)
 
     if b is None:
+        # head_lambda did not find a match (split point), so skip to the next lambda
+        assert xs_head == xs
         assert xs_tail == []
-        raise Exception(f"split_list_at_lambdas: head_lambda did not return a value")
+        return split_list_at_lambdas(xs, tail_lambdas)
 
     xs_tail_head, remaining_splits = split_list_at_lambdas(xs_tail, tail_lambdas)
     return xs_head, [(b, xs_tail_head), *remaining_splits]

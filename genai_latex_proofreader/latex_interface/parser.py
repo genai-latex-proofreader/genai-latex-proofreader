@@ -1,5 +1,4 @@
-from dataclasses import dataclass
-from ftplib import all_errors
+from dataclasses import dataclass, replace
 from typing import Callable, Iterable, Optional, Tuple
 
 from genai_latex_proofreader.utils.splitters import (
@@ -38,10 +37,10 @@ class _DetectedLineMatch:
 
 
 def _create_line_prefix_detector(
-    detect_prefix: str,
+    *detect_prefix: str,
 ) -> Callable[[str], _DetectedLineMatch | None]:
     def f(line):
-        if line.startswith(detect_prefix):
+        if any(line.startswith(prefix) for prefix in detect_prefix):
             return _DetectedLineMatch(line)
         return None
 
@@ -124,12 +123,33 @@ def _parse_content_to_sections(
         )
 
 
+# Patterns to detect start of (optional) bibliography
+# (A line starting with any of these is considered the first line of the bibliography)
+BIBLIOGRAPHY_STARTS = [
+    r"\bibliography",
+    r"%\bibliography",
+    r"\begin{thebibliography}",
+    "% --- bibliography ---",
+]
+
+
+_bibliography_start_detector = _create_line_prefix_detector(*BIBLIOGRAPHY_STARTS)
+
+
+def _is_comment_line(line: str) -> bool:
+    return (
+        line.startswith("%")
+        # -
+        and _bibliography_start_detector(line) is None
+    )
+
+
 def parse_from_latex(input_latex: str) -> LatexDocument:
     """
     Main interface to parse an input LaTeX document into LatexDocument data model
     """
     latex_document: list[str] = [
-        line.strip() for line in input_latex.split("\n") if not line.startswith("%")
+        line.strip() for line in input_latex.split("\n") if not _is_comment_line(line)
     ]
     print(f" - Read {len(latex_document)} lines (after removing comment lines)")
 
@@ -139,7 +159,7 @@ def parse_from_latex(input_latex: str) -> LatexDocument:
             _create_line_prefix_detector(r"\documentclass"),
             _create_line_match_detector(r"\begin{document}"),
             _create_line_match_detector(r"\maketitle"),
-            _create_line_prefix_detector(r"\bibliography"),
+            _bibliography_start_detector,
             _create_line_match_detector(r"\end{document}"),
         ],
     )
@@ -148,45 +168,51 @@ def parse_from_latex(input_latex: str) -> LatexDocument:
             rf"parse_latex: \documentclass expected to be at start of of file."
         )
 
-    if len(splits) != 5:
-        raise Exception(f"parse_latex: expected 5 splits, got {len(splits)}")
+    if len(splits) not in [4, 5]:
+        raise Exception(
+            f"parse_latex: expected 4 (no bibliography) or 5 (with bibliography) "
+            f"splits, but got {len(splits)}."
+        )
 
-    # Parse main parts of the document
-    (
-        (slash_documentclass_line, post_documentclass_lines),
-        (_begin_document, post_begin_document_lines),
-        (_maketitle, post_maketitle_lines),  # = main body of document
-        (slash_bibliography_line, post_bibliography_lines),
-        (_end_document, _post_end_document_lines),
-    ) = splits
-
-    # delete variables with no information
-    del _begin_document, _maketitle, _end_document
-
-    if len(_post_end_document_lines) > 0:
-        raise Exception(r"Did not expect content after \end{document}. Please delete.")
-    del _post_end_document_lines
-
-    # Parse sections and any sections in the appendix
-    main_document, optional_appendix = _parse_content_to_sections(post_maketitle_lines)
-
+    # create empty LatexDocument
     result = LatexDocument(
-        pre_matter=[slash_documentclass_line.matched_line, *post_documentclass_lines],
-        begin_document=post_begin_document_lines,
-        main_document=main_document,
-        appendix=optional_appendix,
-        bibliography=[slash_bibliography_line.matched_line, *post_bibliography_lines],
+        pre_matter=[],
+        begin_document=[],
+        main_document=LatexSections(pre_sections=[], sections=[]),
+        appendix=None,
+        bibliography=[],
     )
+
+    # fill with parsed components
+    for line, content in splits:
+        if line.matched_line.startswith(r"\documentclass"):
+            result = replace(result, pre_matter=[line.matched_line, *content])
+        elif line.matched_line == r"\begin{document}":
+            result = replace(result, begin_document=content)
+        elif line.matched_line == r"\maketitle":
+            main_document, optional_appendix = _parse_content_to_sections(content)
+            result = replace(
+                result, main_document=main_document, appendix=optional_appendix
+            )
+        elif _bibliography_start_detector(line.matched_line) is not None:
+            result = replace(result, bibliography=[line.matched_line, *content])
+        elif line.matched_line == r"\end{document}":
+            if len(content) > 0:
+                raise Exception(
+                    r"Did not expect content after \end{document}. Please delete."
+                )
+        else:
+            raise Exception(f"Unexpected line: {line}")
 
     # Raise exception if there are duplicate labels in the sections (incl. Appendix
     # sections). Also check that input document does not contain same the
     # labels as (our internal) generated labels.
     def _get_labels() -> Iterable[str]:
-        for section in main_document.sections:
+        for section in result.main_document.sections:
             yield from section.labels()
 
-        if optional_appendix is not None:
-            for section in optional_appendix.sections:
+        if result.appendix is not None:
+            for section in result.appendix.sections:
                 yield from section.labels()
 
     if len(list(_get_labels())) != len(set(list(_get_labels()))):

@@ -18,8 +18,6 @@ def test_add_comments_fails_if_reference_is_invalid():
 \section{Introduction}
 \label{sec:intro}
 An introduction.
-
-\bibliography{refs}
 \end{document}"""
 
     with pytest.raises(Exception):
@@ -53,8 +51,6 @@ An introduction.
 \section{Section with a typo}
 \label{sec:with:typo}
 We are proofreading this section, and ir has a typo.
-
-\bibliography{refs}
 \end{document}"""
 
     if add_to_appendix:
