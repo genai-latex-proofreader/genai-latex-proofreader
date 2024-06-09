@@ -16,6 +16,9 @@ on:
 permissions:
   contents: read
 
+env:
+  TERM: xterm-color
+
 jobs:
   ci-run-tests:
     runs-on: ubuntu-24.04
