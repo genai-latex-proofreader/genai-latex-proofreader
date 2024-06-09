@@ -37,6 +37,11 @@ jobs:
         run: |
           (cd .devcontainer/latex; make in-docker/run-make MAKE_TASK="run-mypy")
 
-      - name: Run pytest unit tests
+      - name: Run unit tests
         run: |
           (cd .devcontainer/latex; make in-docker/run-make MAKE_TASK="run-unit-tests")
+
+      - name: Run e2e test and proofread example paper
+        run: |
+          (cd .devcontainer/latex; make in-docker/run-make MAKE_TASK="run-e2e-test-proofread-example-paper")
+

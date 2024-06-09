@@ -102,3 +102,38 @@ def to_latex(obj: LatexDocument | LatexSection | LatexSections) -> str:
                 raise Exception(f"Unknown input to to_latex: {obj}")
 
     return "\n".join(_to_latex(obj))
+
+
+def summary(obj: LatexDocument | LatexSection | LatexSections) -> str:
+    """
+    Return a summary of the parsed LaTeX document.
+    """
+
+    def _summary(obj):
+        match obj:
+            case LatexSection(title, label, generated_label, content):
+                yield f"  Section '{title}', label: '{label}', {len(content)} lines"
+                yield f"    - generated_label: {generated_label}"
+
+            case LatexSections(pre_sections, sections):
+                yield f"Total of {len(sections)} sections"
+                for section in sections:
+                    yield from _summary(section)
+
+            case _ if isinstance(obj, LatexDocument):
+                yield f"Pre-matter: {len(obj.pre_matter)} lines"
+                yield f"Begin document: {len(obj.begin_document)} lines"
+                yield from _summary(obj.main_document)
+
+                if obj.appendix is not None:
+                    yield f"Appendix: {len(obj.appendix.sections)} sections"
+                    yield from _summary(obj.appendix)
+                else:
+                    yield "Appendix: None"
+
+                yield f"Bibliography: {len(obj.bibliography)} lines"
+
+            case _:
+                raise Exception(f"Unknown input to summary: {obj}")
+
+    return "\n".join(_summary(obj))
