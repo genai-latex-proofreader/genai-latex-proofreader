@@ -7,7 +7,7 @@ from genai_latex_proofreader.utils.splitters import (
     split_list_at_lambdas,
 )
 
-from .data_model import LatexDocument, LatexSection, LatexSections
+from .data_model import ContentReferenceBase, LatexDocument, PreSectionRef, SectionRef
 
 
 def _parse_arg_to_latex_command(latex_command: str, line: str) -> str:
@@ -58,6 +58,9 @@ def _create_line_match_detector(
     return f
 
 
+# --- Functions to parse Sections ---
+
+
 def _extract_label(lines: list[str]) -> Optional[str]:
     r"""
     Find first label (eg \label{mylabel}) before any subsections, or subsubsections.
@@ -79,17 +82,20 @@ def _generated_label(section_idx: int, is_appendix: bool) -> str:
     return f"sec:genai:generated:label:{section_idx}"
 
 
-def _extract_sections(lines: list[str], is_appendix: bool) -> LatexSections:
+def _extract_sections(
+    lines: list[str], is_appendix: bool
+) -> dict[ContentReferenceBase, list[str]]:
     """
     Internal function to extract sections from a list of lines.
     """
     pre_sections, sections = split_list_at_lambda(
         lines, _create_line_prefix_detector(r"\section")
     )
-    return LatexSections(
-        pre_sections=pre_sections,
-        sections=[
-            LatexSection(
+    return {
+        PreSectionRef(in_appendix=is_appendix): pre_sections,
+        **{
+            SectionRef(
+                in_appendix=is_appendix,
                 title=_parse_arg_to_latex_command(
                     r"\section", new_section_line.matched_line
                 ),
@@ -97,20 +103,22 @@ def _extract_sections(lines: list[str], is_appendix: bool) -> LatexSections:
                 generated_label=_generated_label(
                     section_idx=section_idx, is_appendix=is_appendix
                 ),
-                content=section_lines,
-            )
+            ): section_lines
             for section_idx, (new_section_line, section_lines) in enumerate(sections)
-        ],
-    )
+        },
+    }
 
 
 def _parse_content_to_sections(
     lines: list[str],
-) -> Tuple[LatexSections, Optional[LatexSections]]:
+) -> Tuple[
+    dict[ContentReferenceBase, list[str]],
+    Optional[dict[ContentReferenceBase, list[str]]],
+]:
     pre_appendix_lines, appendix_line, post_appendix_lines = split_at_first_lambda(
         lines, _create_line_match_detector(r"\appendix")
     )
-    # is there an appendix?
+    # is there an \appendix in the document (potentially empty)?
     if appendix_line is None:
         # no
         assert len(post_appendix_lines) == 0
@@ -122,6 +130,8 @@ def _parse_content_to_sections(
             _extract_sections(post_appendix_lines, is_appendix=True),
         )
 
+
+# --- Bibliography parsing ---
 
 # Patterns to detect start of (optional) bibliography
 # (A line starting with any of these is considered the first line of the bibliography)
@@ -178,8 +188,7 @@ def parse_from_latex(input_latex: str) -> LatexDocument:
     result = LatexDocument(
         pre_matter=[],
         begin_document=[],
-        main_document=LatexSections(pre_sections=[], sections=[]),
-        appendix=None,
+        content_dict={},
         bibliography=[],
     )
 
@@ -190,10 +199,20 @@ def parse_from_latex(input_latex: str) -> LatexDocument:
         elif line.matched_line == r"\begin{document}":
             result = replace(result, begin_document=content)
         elif line.matched_line == r"\maketitle":
-            main_document, optional_appendix = _parse_content_to_sections(content)
-            result = replace(
-                result, main_document=main_document, appendix=optional_appendix
+            main_content_dict, optional_appendix_content_dict = (
+                _parse_content_to_sections(content)
             )
+            if optional_appendix_content_dict is None:
+                result = replace(result, content_dict=main_content_dict)
+            else:
+                result = replace(
+                    result,
+                    content_dict={
+                        **main_content_dict,
+                        **optional_appendix_content_dict,
+                    },
+                )
+
         elif _bibliography_start_detector(line.matched_line) is not None:
             result = replace(result, bibliography=[line.matched_line, *content])
         elif line.matched_line == r"\end{document}":
@@ -205,15 +224,14 @@ def parse_from_latex(input_latex: str) -> LatexDocument:
             raise Exception(f"Unexpected line: {line}")
 
     # Raise exception if there are duplicate labels in the sections (incl. Appendix
-    # sections). Also check that input document does not contain same the
-    # labels as (our internal) generated labels.
+    # sections). Also check that source Latex document does not use the same labels as
+    # (our internal) labels generated when parsing the Latex.
     def _get_labels() -> Iterable[str]:
-        for section in result.main_document.sections:
-            yield from section.labels()
-
-        if result.appendix is not None:
-            for section in result.appendix.sections:
-                yield from section.labels()
+        for ref in result.content_dict.keys():
+            if isinstance(ref, SectionRef):
+                if ref.label is not None:
+                    yield ref.label
+                yield ref.generated_label
 
     if len(list(_get_labels())) != len(set(list(_get_labels()))):
         raise Exception(

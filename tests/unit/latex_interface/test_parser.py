@@ -3,10 +3,9 @@ from typing import Iterable
 
 import pytest
 
-from genai_latex_proofreader.latex_interface.data_model import to_latex
+from genai_latex_proofreader.latex_interface.data_model import to_latex, to_summary
 from genai_latex_proofreader.latex_interface.parser import (
     BIBLIOGRAPHY_STARTS,
-    _extract_sections,
     parse_from_latex,
 )
 
@@ -55,16 +54,44 @@ The result follows since $x^2 + y^2 = 1$
 \end{document}"""
 
 
-def remove_generated_labels(doc: str) -> str:
-    return "\n".join(
-        line
-        for line in doc.split("\n")
-        if not r"\label{sec:genai:generated:label" in line
-    )
+def validate_parser(latex_str: str):
+    def remove_generated_labels(doc: str) -> str:
+        return "\n".join(
+            line
+            for line in doc.split("\n")
+            if not r"\label{sec:genai:generated:label" in line
+        )
+
+    # summary of parsed Latex does not crash
+    doc = parse_from_latex(latex_str)
+    assert isinstance(to_summary(doc), str)
+
+    # conversion to Latex and back does not change the document (after removing extra labels)
+    assert remove_generated_labels(to_latex(doc)) == latex_str
 
 
 def test_latex_parser_and_conversion_back_to_latex():
-    assert TEST_DOC == remove_generated_labels(to_latex(parse_from_latex(TEST_DOC)))
+    validate_parser(TEST_DOC)
+
+
+@pytest.mark.parametrize("include_appendix", [True, False])
+def test_latex_parser_minimal_document(include_appendix: bool):
+    minimal_doc = r"""\documentclass[12pt]{amsart}
+
+\title{A longer title for the paper}
+
+\begin{document}
+
+\maketitle
+
+\end{document}"""
+
+    if include_appendix:
+        minimal_doc = minimal_doc.replace(
+            r"\end{document}", r"\appendix" + "...\n" + r"\end{document}"
+        )
+
+    validate_parser(minimal_doc)
 
 
 @pytest.mark.parametrize(
@@ -77,7 +104,7 @@ def test_latex_parser_and_conversion_back_to_latex_with_optional_bibliography(
     test_doc = TEST_DOC.replace(
         r"\end{document}", bibliography_contents + "\n" + r"\end{document}"
     )
-    assert test_doc == remove_generated_labels(to_latex(parse_from_latex(test_doc)))
+    validate_parser(test_doc)
 
 
 def test_latex_parser_fail_if_duplicate_labels():
@@ -98,13 +125,15 @@ def test_latex_parser_and_conversion_back_to_latex_without_labels():
     def only_labels(doc: str) -> list[str]:
         return [line for line in doc.split("\n") if line.startswith(r"\label")]
 
-    output: str = to_latex(parse_from_latex(remove_labels(TEST_DOC)))
+    no_labels_doc = remove_labels(TEST_DOC)
+    validate_parser(no_labels_doc)
 
-    assert remove_labels(output) == remove_labels(TEST_DOC)
+    # check that generated labels are in output Latex
+    output: str = to_latex(parse_from_latex(no_labels_doc))
     assert len(set(only_labels(output))) == 5  # 4 sections + 1 section in appendix
 
 
-def generate_sections(
+def _generate_sections(
     initial_rows: int, nr_sections: int, nr_rows_per_section: int
 ) -> Iterable[str]:
     def random_lines(nr_lines: int) -> Iterable[str]:
@@ -125,29 +154,6 @@ def generate_sections(
     yield from random_lines(initial_rows)
     for _ in range(nr_sections):
         yield from section_content(nr_rows_per_section)
-
-
-def test_parse_section():
-    # test internal function _extract_sections for parsing \section{...}
-
-    for pre_section_lines_count in range(3):
-        for sections_nr in range(3):
-            for nr_rows_per_section in range(3):
-                sections_lines = list(
-                    generate_sections(
-                        pre_section_lines_count,
-                        sections_nr,
-                        nr_rows_per_section,
-                    )
-                )
-
-                assert (
-                    remove_generated_labels(
-                        to_latex(_extract_sections(sections_lines, is_appendix=False))
-                    )
-                    # -
-                    == "\n".join(sections_lines)
-                )
 
 
 @pytest.mark.parametrize("include_appendix", [True, False])
@@ -185,7 +191,7 @@ My abstract
         for sections_nr in range(3):
             for nr_rows_per_section in range(3):
                 sections_lines: list[str] = list(
-                    generate_sections(
+                    _generate_sections(
                         pre_section_lines_count,
                         sections_nr,
                         nr_rows_per_section,
@@ -195,7 +201,7 @@ My abstract
                 if include_appendix:
                     potential_appendix = [
                         r"\appendix",
-                        *generate_sections(
+                        *_generate_sections(
                             pre_section_lines_count,
                             sections_nr,
                             nr_rows_per_section,
@@ -217,7 +223,4 @@ My abstract
                     ]
                 )
 
-                assert (
-                    remove_generated_labels(to_latex(parse_from_latex(latex_doc)))
-                    == latex_doc
-                )
+                validate_parser(latex_doc)
