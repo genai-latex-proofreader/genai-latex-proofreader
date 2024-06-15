@@ -107,12 +107,8 @@ class LatexDocument:
 
     # --- \maketitle ---
 
-    main_document: LatexSections
-
-    # --- \appendix ---
-
-    appendix: Optional[LatexSections]
-
+    # all sections, including sections in appendix
+    # dict key order determine section order (with optional Appendix sections last)
     content_dict: dict[ContentReferenceBase, list[str]]
 
     bibliography: list[str]
@@ -174,36 +170,37 @@ def to_latex(obj: LatexDocument) -> str:
     return "\n".join(_to_latex(obj))
 
 
-def summary(obj: LatexDocument | LatexSection | LatexSections) -> str:
+def to_summary(obj: LatexDocument) -> str:
     """
     Return a summary of the parsed LaTeX document.
     """
 
+    def _emit_content_dict_summary(content_dict: dict[ContentReferenceBase, list[str]]):
+
+        # input does not cross border between appendix and main document
+        assert len(set(k.in_appendix for k in content_dict.keys())) == 1
+
+        for section_ref, content in content_dict.items():
+            if isinstance(section_ref, PreSectionRef):
+                yield f" - Pre-section ({len(content)} lines)"
+
+            elif isinstance(section_ref, SectionRef):
+                yield f" - Section '{section_ref.title}', label: '{section_ref.label}', {len(content)} lines"
+                yield f"    - generated_label: {section_ref.generated_label}"
+
     def _summary(obj):
-        match obj:
-            case LatexSection(title, label, generated_label, content):
-                yield f"  Section '{title}', label: '{label}', {len(content)} lines"
-                yield f"    - generated_label: {generated_label}"
+        yield f"Pre-matter: {len(obj.pre_matter)} lines"
+        yield f"Begin document: {len(obj.begin_document)} lines"
 
-            case LatexSections(pre_sections, sections):
-                yield f"Total of {len(sections)} sections"
-                for section in sections:
-                    yield from _summary(section)
+        yield from _emit_content_dict_summary(
+            obj.filter_content_dict(is_appendix=False)
+        )
 
-            case _ if isinstance(obj, LatexDocument):
-                yield f"Pre-matter: {len(obj.pre_matter)} lines"
-                yield f"Begin document: {len(obj.begin_document)} lines"
-                yield from _summary(obj.main_document)
+        appendix_content_dict = obj.filter_content_dict(is_appendix=True)
+        if len(appendix_content_dict) > 0:
+            yield r"--- Appendix ---"
+            yield from _emit_content_dict_summary(appendix_content_dict)
 
-                if obj.appendix is not None:
-                    yield f"Appendix: {len(obj.appendix.sections)} sections"
-                    yield from _summary(obj.appendix)
-                else:
-                    yield "Appendix: None"
-
-                yield f"Bibliography: {len(obj.bibliography)} lines"
-
-            case _:
-                raise Exception(f"Unknown input to summary: {obj}")
+        yield f"Bibliography: {len(obj.bibliography)} lines"
 
     return "\n".join(_summary(obj))

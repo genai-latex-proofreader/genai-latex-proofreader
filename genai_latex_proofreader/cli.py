@@ -2,7 +2,7 @@ from argparse import ArgumentParser
 from pathlib import Path
 
 from .compile_latex import compile_latex
-from .latex_interface.data_model import summary
+from .latex_interface.data_model import to_summary
 from .latex_interface.parser import parse_from_latex
 from .utils.io import read_directory
 
@@ -44,4 +44,4 @@ if __name__ == "__main__":
     doc = parse_from_latex(files_in_scope[main_file].decode("utf-8"))
     print(f"Input LaTeX document {main_file} parses successfully [OK]")
     print("--- Summary ---")
-    print(summary(doc))
+    print(to_summary(doc))

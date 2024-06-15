@@ -7,14 +7,7 @@ from genai_latex_proofreader.utils.splitters import (
     split_list_at_lambdas,
 )
 
-from .data_model import (
-    ContentReferenceBase,
-    LatexDocument,
-    LatexSection,
-    LatexSections,
-    PreSectionRef,
-    SectionRef,
-)
+from .data_model import ContentReferenceBase, LatexDocument, PreSectionRef, SectionRef
 
 
 def _parse_arg_to_latex_command(latex_command: str, line: str) -> str:
@@ -89,17 +82,20 @@ def _generated_label(section_idx: int, is_appendix: bool) -> str:
     return f"sec:genai:generated:label:{section_idx}"
 
 
-def _extract_sections(lines: list[str], is_appendix: bool) -> LatexSections:
+def _extract_sections(
+    lines: list[str], is_appendix: bool
+) -> dict[ContentReferenceBase, list[str]]:
     """
     Internal function to extract sections from a list of lines.
     """
     pre_sections, sections = split_list_at_lambda(
         lines, _create_line_prefix_detector(r"\section")
     )
-    return LatexSections(
-        pre_sections=pre_sections,
-        sections=[
-            LatexSection(
+    return {
+        PreSectionRef(in_appendix=is_appendix): pre_sections,
+        **{
+            SectionRef(
+                in_appendix=is_appendix,
                 title=_parse_arg_to_latex_command(
                     r"\section", new_section_line.matched_line
                 ),
@@ -107,38 +103,22 @@ def _extract_sections(lines: list[str], is_appendix: bool) -> LatexSections:
                 generated_label=_generated_label(
                     section_idx=section_idx, is_appendix=is_appendix
                 ),
-                content=section_lines,
-            )
+            ): section_lines
             for section_idx, (new_section_line, section_lines) in enumerate(sections)
-        ],
-        content_dict={
-            PreSectionRef(in_appendix=is_appendix): pre_sections,
-            **{
-                SectionRef(
-                    in_appendix=is_appendix,
-                    title=_parse_arg_to_latex_command(
-                        r"\section", new_section_line.matched_line
-                    ),
-                    label=_extract_label(section_lines),
-                    generated_label=_generated_label(
-                        section_idx=section_idx, is_appendix=is_appendix
-                    ),
-                ): section_lines
-                for section_idx, (new_section_line, section_lines) in enumerate(
-                    sections
-                )
-            },
         },
-    )
+    }
 
 
 def _parse_content_to_sections(
     lines: list[str],
-) -> Tuple[LatexSections, Optional[LatexSections]]:
+) -> Tuple[
+    dict[ContentReferenceBase, list[str]],
+    Optional[dict[ContentReferenceBase, list[str]]],
+]:
     pre_appendix_lines, appendix_line, post_appendix_lines = split_at_first_lambda(
         lines, _create_line_match_detector(r"\appendix")
     )
-    # is there an appendix?
+    # is there an \appendix in the document (potentially empty)?
     if appendix_line is None:
         # no
         assert len(post_appendix_lines) == 0
@@ -208,8 +188,6 @@ def parse_from_latex(input_latex: str) -> LatexDocument:
     result = LatexDocument(
         pre_matter=[],
         begin_document=[],
-        main_document=LatexSections(pre_sections=[], sections=[], content_dict={}),
-        appendix=None,
         content_dict={},
         bibliography=[],
     )
@@ -221,19 +199,17 @@ def parse_from_latex(input_latex: str) -> LatexDocument:
         elif line.matched_line == r"\begin{document}":
             result = replace(result, begin_document=content)
         elif line.matched_line == r"\maketitle":
-            main_document, optional_appendix = _parse_content_to_sections(content)
-            result = replace(
-                result, main_document=main_document, appendix=optional_appendix
+            main_content_dict, optional_appendix_content_dict = (
+                _parse_content_to_sections(content)
             )
-
-            if optional_appendix is None:
-                result = replace(result, content_dict=main_document.content_dict)
+            if optional_appendix_content_dict is None:
+                result = replace(result, content_dict=main_content_dict)
             else:
                 result = replace(
                     result,
                     content_dict={
-                        **main_document.content_dict,
-                        **optional_appendix.content_dict,
+                        **main_content_dict,
+                        **optional_appendix_content_dict,
                     },
                 )
 
