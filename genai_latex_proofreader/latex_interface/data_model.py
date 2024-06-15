@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional
 
-# --- Data model for parsed LaTeX document ---
+# --- Data model for a parsed LaTeX document ---
 
 # --- Data models to reference content in LaTeX document ---
 
@@ -53,44 +53,6 @@ class SectionRef(ContentReferenceBase):
     # is parsed. This will ensure we can refer to sections also when no label is given
     # in the input Latex document.
     generated_label: str
-
-
-@dataclass(frozen=True)
-class LatexSection:
-    # Title of the section, eg., determined by "\section{Introduction}".
-    title: str
-
-    # Optional label for this section given in input Latex document,
-    # eg., with a \label{sec:intro} command.
-    #
-    # If the input document contains more than one \label{...} for this section,
-    # this will only contain the first label, eg., "sec:intro".
-    #
-    # If Section contains no \label{...} in the input document, this is None.
-    label: Optional[str]
-
-    # All sections will be given a generated label when the input Latex document
-    # is parsed. This will ensure we can refer to sections also when no label is given
-    # in the input Latex document.
-    generated_label: str
-
-    # Section content (including subsections, \label{..}, but not \section{})
-    content: list[str]
-
-    def labels(self) -> list[str]:
-        """
-        Return Latex labels for this section.
-        """
-        # TODO: delete this and all dependencies
-        # assert False
-        return ([self.label] if self.label is not None else []) + [self.generated_label]
-
-
-@dataclass(frozen=True)
-class LatexSections:
-    pre_sections: list[str]
-    sections: list[LatexSection]
-    content_dict: dict[ContentReferenceBase, list[str]]
 
 
 @dataclass(frozen=True)
