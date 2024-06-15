@@ -7,7 +7,14 @@ from genai_latex_proofreader.utils.splitters import (
     split_list_at_lambdas,
 )
 
-from .data_model import LatexDocument, LatexSection, LatexSections
+from .data_model import (
+    ContentReferenceBase,
+    LatexDocument,
+    LatexSection,
+    LatexSections,
+    PreSectionRef,
+    SectionRef,
+)
 
 
 def _parse_arg_to_latex_command(latex_command: str, line: str) -> str:
@@ -58,6 +65,9 @@ def _create_line_match_detector(
     return f
 
 
+# --- Functions to parse Sections ---
+
+
 def _extract_label(lines: list[str]) -> Optional[str]:
     r"""
     Find first label (eg \label{mylabel}) before any subsections, or subsubsections.
@@ -101,6 +111,24 @@ def _extract_sections(lines: list[str], is_appendix: bool) -> LatexSections:
             )
             for section_idx, (new_section_line, section_lines) in enumerate(sections)
         ],
+        content_dict={
+            PreSectionRef(in_appendix=is_appendix): pre_sections,
+            **{
+                SectionRef(
+                    in_appendix=is_appendix,
+                    title=_parse_arg_to_latex_command(
+                        r"\section", new_section_line.matched_line
+                    ),
+                    label=_extract_label(section_lines),
+                    generated_label=_generated_label(
+                        section_idx=section_idx, is_appendix=is_appendix
+                    ),
+                ): section_lines
+                for section_idx, (new_section_line, section_lines) in enumerate(
+                    sections
+                )
+            },
+        },
     )
 
 
@@ -122,6 +150,8 @@ def _parse_content_to_sections(
             _extract_sections(post_appendix_lines, is_appendix=True),
         )
 
+
+# --- Bibliography parsing ---
 
 # Patterns to detect start of (optional) bibliography
 # (A line starting with any of these is considered the first line of the bibliography)
@@ -178,8 +208,9 @@ def parse_from_latex(input_latex: str) -> LatexDocument:
     result = LatexDocument(
         pre_matter=[],
         begin_document=[],
-        main_document=LatexSections(pre_sections=[], sections=[]),
+        main_document=LatexSections(pre_sections=[], sections=[], content_dict={}),
         appendix=None,
+        content_dict={},
         bibliography=[],
     )
 
@@ -194,6 +225,18 @@ def parse_from_latex(input_latex: str) -> LatexDocument:
             result = replace(
                 result, main_document=main_document, appendix=optional_appendix
             )
+
+            if optional_appendix is None:
+                result = replace(result, content_dict=main_document.content_dict)
+            else:
+                result = replace(
+                    result,
+                    content_dict={
+                        **main_document.content_dict,
+                        **optional_appendix.content_dict,
+                    },
+                )
+
         elif _bibliography_start_detector(line.matched_line) is not None:
             result = replace(result, bibliography=[line.matched_line, *content])
         elif line.matched_line == r"\end{document}":
@@ -205,15 +248,14 @@ def parse_from_latex(input_latex: str) -> LatexDocument:
             raise Exception(f"Unexpected line: {line}")
 
     # Raise exception if there are duplicate labels in the sections (incl. Appendix
-    # sections). Also check that input document does not contain same the
-    # labels as (our internal) generated labels.
+    # sections). Also check that source Latex document does not use the same labels as
+    # (our internal) labels generated when parsing the Latex.
     def _get_labels() -> Iterable[str]:
-        for section in result.main_document.sections:
-            yield from section.labels()
-
-        if result.appendix is not None:
-            for section in result.appendix.sections:
-                yield from section.labels()
+        for ref in result.content_dict.keys():
+            if isinstance(ref, SectionRef):
+                if ref.label is not None:
+                    yield ref.label
+                yield ref.generated_label
 
     if len(list(_get_labels())) != len(set(list(_get_labels()))):
         raise Exception(

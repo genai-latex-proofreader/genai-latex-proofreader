@@ -1,6 +1,11 @@
 from dataclasses import replace
 
-from ..latex_interface.data_model import LatexDocument, LatexSection, LatexSections
+from ..latex_interface.data_model import (
+    ContentReferenceBase,
+    LatexDocument,
+    LatexSection,
+    LatexSections,
+)
 from .data_model import SectionComment, SectionRef
 
 
@@ -50,25 +55,28 @@ def _add_comment_to_sections(
 
 
 def add_comments(
-    doc: LatexDocument, comments: dict[SectionRef, SectionComment]
+    doc: LatexDocument,
+    section_ref: ContentReferenceBase,
+    comments: list[str],
 ) -> LatexDocument:
     """
     Add proofreading comments to a LaTeX document.
     """
-    for section_ref, section_comment in comments.items():
-        if section_ref.in_appendix:
-            assert doc.appendix is not None
-            doc = replace(
-                doc,
-                appendix=_add_comment_to_sections(
-                    doc.appendix, section_ref, section_comment
-                ),
-            )
-        else:
-            doc = replace(
-                doc,
-                main_document=_add_comment_to_sections(
-                    doc.main_document, section_ref, section_comment
-                ),
-            )
-    return doc
+    if any(
+        forbidden_command in comments
+        for forbidden_command in [r"\section", r"\subsection", r"\subsubsection"]
+    ):
+        raise ValueError(
+            f"Section comment should not define any section:s, subsection:s, or subsubsection:s."
+        )
+
+    if not section_ref in doc.content_dict:
+        raise ValueError(f"Section reference {section_ref} not found in document.")
+
+    return replace(
+        doc,
+        content_dict={
+            _section_ref: (comments if _section_ref == section_ref else []) + content
+            for _section_ref, content in doc.content_dict.items()
+        },
+    )

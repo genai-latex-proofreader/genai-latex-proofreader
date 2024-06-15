@@ -1,12 +1,12 @@
 import pytest
 
-from genai_latex_proofreader.latex_interface.data_model import to_latex
+from genai_latex_proofreader.latex_interface.data_model import (
+    PreSectionRef,
+    SectionRef,
+    to_latex,
+)
 from genai_latex_proofreader.latex_interface.parser import parse_from_latex
 from genai_latex_proofreader.proofread_comments.add_comments import add_comments
-from genai_latex_proofreader.proofread_comments.data_model import (
-    SectionComment,
-    SectionRef,
-)
 
 
 def test_add_comments_fails_if_reference_is_invalid():
@@ -23,15 +23,13 @@ An introduction.
     with pytest.raises(Exception):
         add_comments(
             parse_from_latex(input_latex),
-            # 'sec:intro' is not in Appendix
-            {SectionRef(True, "sec:intro"): SectionComment(["..."])},
-        )
-
-    with pytest.raises(Exception):
-        add_comments(
-            parse_from_latex(input_latex),
-            # 'sec:intro2' does not exist
-            {SectionRef(False, "sec:intro2"): SectionComment(["..."])},
+            SectionRef(
+                in_appendix=True,  # <- Introduction is not in appendix
+                title="Introduction",
+                label="sec:intro",
+                generated_label="xx",
+            ),
+            ["..."],
         )
 
 
@@ -58,15 +56,13 @@ We are proofreading this section, and ir has a typo.
 
     proofreading_comment = r"\textbf{This section contains a typo; ir should be it!}"
 
+    doc = parse_from_latex(input_latex)
+
+    # add comment to last section in entire document
+    ref_to_section_with_typo = list(doc.content_dict.keys())[-1]
+
     modified_latex = to_latex(
-        add_comments(
-            parse_from_latex(input_latex),
-            {
-                SectionRef(add_to_appendix, "sec:with:typo"): SectionComment(
-                    [proofreading_comment]
-                )
-            },
-        )
+        add_comments(doc, ref_to_section_with_typo, [proofreading_comment])
     )
 
     assert proofreading_comment in modified_latex

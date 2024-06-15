@@ -104,7 +104,7 @@ def test_latex_parser_and_conversion_back_to_latex_without_labels():
     assert len(set(only_labels(output))) == 5  # 4 sections + 1 section in appendix
 
 
-def generate_sections(
+def _generate_sections(
     initial_rows: int, nr_sections: int, nr_rows_per_section: int
 ) -> Iterable[str]:
     def random_lines(nr_lines: int) -> Iterable[str]:
@@ -125,29 +125,6 @@ def generate_sections(
     yield from random_lines(initial_rows)
     for _ in range(nr_sections):
         yield from section_content(nr_rows_per_section)
-
-
-def test_parse_section():
-    # test internal function _extract_sections for parsing \section{...}
-
-    for pre_section_lines_count in range(3):
-        for sections_nr in range(3):
-            for nr_rows_per_section in range(3):
-                sections_lines = list(
-                    generate_sections(
-                        pre_section_lines_count,
-                        sections_nr,
-                        nr_rows_per_section,
-                    )
-                )
-
-                assert (
-                    remove_generated_labels(
-                        to_latex(_extract_sections(sections_lines, is_appendix=False))
-                    )
-                    # -
-                    == "\n".join(sections_lines)
-                )
 
 
 @pytest.mark.parametrize("include_appendix", [True, False])
@@ -185,7 +162,7 @@ My abstract
         for sections_nr in range(3):
             for nr_rows_per_section in range(3):
                 sections_lines: list[str] = list(
-                    generate_sections(
+                    _generate_sections(
                         pre_section_lines_count,
                         sections_nr,
                         nr_rows_per_section,
@@ -195,7 +172,7 @@ My abstract
                 if include_appendix:
                     potential_appendix = [
                         r"\appendix",
-                        *generate_sections(
+                        *_generate_sections(
                             pre_section_lines_count,
                             sections_nr,
                             nr_rows_per_section,
