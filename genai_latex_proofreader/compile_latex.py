@@ -1,8 +1,9 @@
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
-from .utils.io import read_directory, write_directory
+from genai_latex_proofreader.latex_interface.data_model import LatexDocument
+
+from .latex_interface.data_model import to_latex
 from .utils.run_commands import CommandResult, run_commands
 
 
@@ -38,3 +39,18 @@ def compile_latex(
     """
 
     return run_commands(files, compile_commands(main_file))
+
+
+def compile_latex_doc(
+    doc: LatexDocument,
+    doc_path: Path,
+    compile_commands: Callable[[Path], list[str]] = _compile_commands,
+) -> list[CommandResult]:
+    return compile_latex(
+        files={
+            **doc.supporting_files,
+            doc_path: to_latex(doc).encode("utf-8"),
+        },
+        main_file=doc_path,
+        compile_commands=compile_commands,
+    )

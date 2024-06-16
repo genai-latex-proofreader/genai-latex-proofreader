@@ -1,4 +1,5 @@
 from dataclasses import dataclass, replace
+from pathlib import Path
 from typing import Callable, Iterable, Optional, Tuple
 
 from genai_latex_proofreader.utils.splitters import (
@@ -154,7 +155,9 @@ def _is_comment_line(line: str) -> bool:
     )
 
 
-def parse_from_latex(input_latex: str) -> LatexDocument:
+def parse_from_latex(
+    input_latex: str, supporting_files: dict[Path, bytes] = {}
+) -> LatexDocument:
     """
     Main interface to parse an input LaTeX document into LatexDocument data model
     """
@@ -190,6 +193,7 @@ def parse_from_latex(input_latex: str) -> LatexDocument:
         begin_document=[],
         content_dict={},
         bibliography=[],
+        supporting_files=supporting_files,
     )
 
     # fill with parsed components
@@ -240,3 +244,17 @@ def parse_from_latex(input_latex: str) -> LatexDocument:
         )
 
     return result
+
+
+def parse_latex_from_files(files: dict[Path, bytes], main_file: Path) -> LatexDocument:
+    """
+    Convenience function to parse dictionary of files (where one file is the main LaTeX
+    source) into a LatexDocument
+    """
+    if main_file not in files:
+        raise Exception(f"Main file {main_file} not found in files {files.keys()}.")
+
+    return parse_from_latex(
+        input_latex=files[main_file].decode("utf-8"),
+        supporting_files={f: content for f, content in files.items() if f != main_file},
+    )

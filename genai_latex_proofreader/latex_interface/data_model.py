@@ -1,5 +1,8 @@
-from dataclasses import dataclass
-from typing import Optional
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Iterable, Optional
+
+from ..utils.io import write_directory
 
 # --- Data model for a parsed LaTeX document ---
 
@@ -77,6 +80,9 @@ class LatexDocument:
 
     # --- \end{document} ---
 
+    # images, bibliography files, etc.
+    supporting_files: dict[Path, bytes] = field(default_factory=dict)
+
     def filter_content_dict(
         self, is_appendix: bool
     ) -> dict[ContentReferenceBase, list[str]]:
@@ -87,28 +93,31 @@ class LatexDocument:
         }
 
 
+def render_content_dict(
+    content_dict: dict[ContentReferenceBase, list[str]]
+) -> Iterable[str]:
+
+    # input does not cross border between appendix and main document
+    assert len(set(k.in_appendix for k in content_dict.keys())) == 1
+
+    for section_ref, content in content_dict.items():
+        if isinstance(section_ref, PreSectionRef):
+            yield from content
+
+        elif isinstance(section_ref, SectionRef):
+            yield rf"\section{{{section_ref.title}}}"
+            # A latex section can have multiple labels. If no label is
+            # assigned in the source document, we here ensure that this
+            # section has a label (eg. that can be used to reference the
+            # section from review comments).
+            yield rf"\label{{{section_ref.generated_label}}}"
+            yield from content
+
+
 def to_latex(obj: LatexDocument) -> str:
     """
     Convert a parsed LaTeX document back into a LaTeX document string.
     """
-
-    def _emit_content_dict(content_dict: dict[ContentReferenceBase, list[str]]):
-
-        # input does not cross border between appendix and main document
-        assert len(set(k.in_appendix for k in content_dict.keys())) == 1
-
-        for section_ref, content in content_dict.items():
-            if isinstance(section_ref, PreSectionRef):
-                yield from content
-
-            elif isinstance(section_ref, SectionRef):
-                yield rf"\section{{{section_ref.title}}}"
-                # A latex section can have multiple labels. If no label is
-                # assigned in the source document, we here ensure that this
-                # section has a label (eg. that can be used to reference the
-                # section from review comments).
-                yield rf"\label{{{section_ref.generated_label}}}"
-                yield from content
 
     def _to_latex(obj: LatexDocument):
 
@@ -117,19 +126,28 @@ def to_latex(obj: LatexDocument) -> str:
         yield from obj.begin_document
         yield r"\maketitle"
 
-        yield from _emit_content_dict(obj.filter_content_dict(is_appendix=False))
+        yield from render_content_dict(obj.filter_content_dict(is_appendix=False))
 
         # optional appendix
         appendix_content_dict = obj.filter_content_dict(is_appendix=True)
         if len(appendix_content_dict) > 0:
             yield r"\appendix"
-            yield from _emit_content_dict(appendix_content_dict)
+            yield from render_content_dict(appendix_content_dict)
 
         # bibliography end matters
         yield from obj.bibliography
         yield r"\end{document}"
 
     return "\n".join(_to_latex(obj))
+
+
+def write_latex(doc: LatexDocument, output_filepath: Path):
+    """
+    Output a parsed LaTeX document to a file.
+    """
+    output_filepath.parent.mkdir(parents=True, exist_ok=True)
+    output_filepath.write_text(to_latex(doc))
+    write_directory(doc.supporting_files, output_filepath.parent)
 
 
 def to_summary(obj: LatexDocument) -> str:
@@ -164,5 +182,9 @@ def to_summary(obj: LatexDocument) -> str:
             yield from _emit_content_dict_summary(appendix_content_dict)
 
         yield f"Bibliography: {len(obj.bibliography)} lines"
+        yield ""
+        yield f"Number of supporting files: {len(obj.supporting_files)}:"
+        for path, content in obj.supporting_files.items():
+            yield f" - {path} ({len(content)} bytes)"
 
     return "\n".join(_summary(obj))
