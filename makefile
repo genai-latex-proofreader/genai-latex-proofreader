@@ -26,7 +26,8 @@ run-e2e-test-proofread-example-paper:
 	@curl https://arxiv.org/e-print/1108.4207 | \
 	    tar -xvzf - --directory=paper
 	@python3 -m genai_latex_proofreader.cli \
-	    --input_latex_path paper/arxiv-1-frame.tex
+	    --input_latex_path paper/arxiv-1-frame.tex \
+	    --output_report_filepath proofreading-report/report.tex
 
 watch-run-unit-tests:
 	@# Run tests whenever a Python file is updated, or one press Space in terminal
