@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from typing import Callable, Iterable
 
 import anthropic
@@ -12,7 +13,6 @@ def make_query(system_prompt: str, user_prompt: str, max_tokens: int) -> str:
     https://github.com/anthropics/anthropic-sdk-python
     https://support.anthropic.com/en/articles/8324991-about-claude-pro-usage
     """
-
     client = anthropic.Anthropic(
         timeout=httpx.Timeout(pool=10.0, read=200.0, write=10.0, connect=10.0),
         max_retries=10,
@@ -42,3 +42,41 @@ def make_query(system_prompt: str, user_prompt: str, max_tokens: int) -> str:
                     yield content_part["text"]
 
     return "\n".join(_get_api_response())
+
+
+class GenAIClient:
+    def __init__(self, log_output_path: Path, max_tokens: int = 1000):
+        self.calls = 0
+        self.max_tokens = max_tokens
+        self.log_output_path = log_output_path
+        log_output_path.mkdir(parents=True, exist_ok=True)
+
+    def make_query(self, system_prompt: str, user_prompt: str, label: str) -> str:
+        response = make_query(system_prompt, user_prompt, self.max_tokens)
+
+        # make filename more friendly for filesystems
+        label = label.replace(" ", "-").replace(":", ";")
+
+        print("Writing log to ", self.log_output_path / f"{self.calls}-{label}.txt")
+        (self.log_output_path / f"{self.calls}-{label}.txt").write_text(
+            f"""Call # {self.calls}
+{80 * '='}
+SYSTEM PROMPT:
+{80 * '-'}
+{system_prompt}
+{80 * '-'}
+
+USER PROMPT:
+{80 * '-'}
+{user_prompt}
+{80 * '-'}
+
+RESPONSE:
+{80 * '-'}
+{response}
+{80 * '='}
+"""
+        )
+        self.calls += 1
+
+        return response
