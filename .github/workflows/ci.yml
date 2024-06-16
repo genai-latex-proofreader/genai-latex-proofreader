@@ -45,3 +45,13 @@ jobs:
         run: |
           (cd .devcontainer/latex; make in-docker/run-make MAKE_TASK="run-e2e-test-proofread-example-paper")
 
+          # listing all files in output directory
+          find proofreading-report/.
+
+      - name: Save proofreading report as artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: proofreading-report
+
+
+
