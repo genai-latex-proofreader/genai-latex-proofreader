@@ -15,3 +15,5 @@ mypy==1.8.0
 # 'isort' Python package used by "ms-python.isort" (as of 2024.05.25)
 # https://marketplace.visualstudio.com/items?itemName=ms-python.isort
 isort==5.11.5
+
+PyYAML==6.0.1
