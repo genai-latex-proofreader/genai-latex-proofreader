@@ -3,7 +3,8 @@ from dataclasses import replace
 from pathlib import Path
 
 from .compile_latex import compile_latex, compile_latex_doc
-from .genai_proofreader.runner import proofread_paper
+
+# from .genai_proofreader.runner import proofread_paper
 from .latex_interface.data_model import LatexDocument, to_summary, write_latex
 from .latex_interface.parser import parse_from_latex, parse_latex_from_files
 from .utils.io import read_directory, write_directory
