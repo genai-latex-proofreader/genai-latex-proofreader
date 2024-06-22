@@ -48,6 +48,8 @@ jobs:
 
           # listing all files in output directory
           find proofreading-report/.
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
       - name: Save proofreading report as artifact
         if: ${{ github.event_name == 'workflow_dispatch' }}
