@@ -18,6 +18,23 @@ class CommandResult:
     returncode: int
     output_files: dict[Path, bytes]
 
+    def __str__(self):
+        def _list_files():
+            for file, content in self.output_files.items():
+                yield f"{file} ({len(content)} bytes)"
+
+        return (
+            f"CommandResult("
+            f"  returncode={self.returncode}, \n"
+            f"  stdout={self.stdout}, \n"
+            f"  stderr={self.stderr}, \n"
+            f"  output_files=\n{'\n'.join(_list_files())}\n"
+            f")"
+        )
+
+    def __repr__(self):
+        return str(self)
+
 
 def _execute_command(command: str, cwd: Path) -> CommandResult:
     result = subprocess.run(
