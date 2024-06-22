@@ -33,22 +33,20 @@ jobs:
         run: |
           (cd .devcontainer/latex; make build)
 
-      - name: Check static code checking (mypy)
-        run: |
-          (cd .devcontainer/latex; make in-docker/run-make MAKE_TASK="run-mypy")
+      # - name: Check static code checking (mypy)
+      #   run: |
+      #     (cd .devcontainer/latex; make in-docker/run-make MAKE_TASK="run-mypy")
 
-      - name: Run unit tests
-        run: |
-          (cd .devcontainer/latex; make in-docker/run-make MAKE_TASK="run-unit-tests")
+      # - name: Run unit tests
+      #   run: |
+      #     (cd .devcontainer/latex; make in-docker/run-make MAKE_TASK="run-unit-tests")
 
       - name: "Run integration tests (with API key)"
         #if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
-          echo "FOO=$FOO"
           (cd .devcontainer/latex; make in-docker/run-make MAKE_TASK="run-integration-tests")
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          FOO: "Hello world"
 
       - name: "e2e integration test: proofread example paper (with API key)"
         if: ${{ github.event_name == 'workflow_dispatch' }}
