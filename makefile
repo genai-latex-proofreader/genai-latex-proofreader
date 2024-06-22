@@ -29,23 +29,25 @@ run-e2e-test-proofread-empty-paper:
 	@mkdir -p test-proofread-empty-paper/input
 	@python3 -m genai_latex_proofreader.cli \
 	     --input_latex_path       tests/integration/assets/empty_paper.tex \
-	     --output_report_filepath test-proofread-empty-paper/report.tex
+	     --output_report_filepath testing/proofread-empty-paper/report.tex
 
 	@echo "--- List of generated files ---"
-	@find test-proofread-empty-paper
+	@find testing/proofread-empty-paper
 
 run-e2e-test-proofread-example-paper:
 	@# Process an example paper:
 	@#
-	@#    https://arxiv.org/abs/1108.4207
-	@#    Non-dissipative electromagnetic medium with a double light cone
-	@#    Matias F. Dahl
-	@#    https://doi.org/10.1016/j.aop.2012.11.005
+	@echo "--- Running end-to-end test: proofread example paper ---"
+	@echo "    https://arxiv.org/abs/1108.4207"
+	@echo "    Non-dissipative electromagnetic medium with a double light cone"
+	@echo "    Matias F. Dahl"
+	@echo "    https://doi.org/10.1016/j.aop.2012.11.005"
 	@#
-	@mkdir paper
-	@curl https://arxiv.org/e-print/1108.4207 | \
-	    tar -xvzf - --directory=paper
+	@mkdir -p testing/tmp
+	@curl https://arxiv.org/e-print/1108.4207 | tar -xvzf - --directory=testing/tmp
 	@python3 -m genai_latex_proofreader.cli \
-	    --input_latex_path paper/arxiv-1-frame.tex \
-	    --output_report_filepath proofreading-report/report.tex
+	    --input_latex_path testing/tmp/arxiv-1-frame.tex \
+	    --output_report_filepath testing/proofread-example-paper/report.tex
 
+	@echo "--- List of generated files ---"
+	@find testing/proofread-example-paper
