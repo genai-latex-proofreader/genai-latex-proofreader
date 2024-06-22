@@ -42,7 +42,7 @@ jobs:
           (cd .devcontainer/latex; make in-docker/run-make MAKE_TASK="run-unit-tests")
 
       - name: "Run integration tests (with API key)"
-        if: ${{ github.event_name == 'workflow_dispatch' }}
+        #if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           echo "FOO=$FOO"
           (cd .devcontainer/latex; make in-docker/run-make MAKE_TASK="run-integration-tests")
