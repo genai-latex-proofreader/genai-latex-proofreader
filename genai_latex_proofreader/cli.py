@@ -3,10 +3,10 @@ from dataclasses import replace
 from pathlib import Path
 
 from .compile_latex import compile_latex, compile_latex_doc
-
-# from .genai_proofreader.runner import proofread_paper
+from .genai_interface.anthropic import GenAIClient
+from .genai_proofreader.runner import proofread_paper
 from .latex_interface.data_model import LatexDocument, to_summary, write_latex
-from .latex_interface.parser import parse_from_latex, parse_latex_from_files
+from .latex_interface.parser import parse_latex_from_files
 from .utils.io import read_directory, write_directory
 
 
@@ -51,17 +51,23 @@ if __name__ == "__main__":
 
     doc = parse_latex_from_files(files_in_scope, main_file)
 
-    # ensure that the color package is included in report
-    doc = replace(doc, pre_matter=doc.pre_matter + [r"\usepackage{color}"])
-
     print(f"Input LaTeX document {main_file} parses successfully [OK]")
     print("--- Summary ---")
     print(to_summary(doc))
 
+    print(" --- Testing that input compiles ---")
+    output = compile_latex_doc(doc, Path("report.tex"))
+    write_directory(
+        files=output[-1].output_files,
+        directory=args().output_report_filepath.parent / "input",
+    )
+
+    print(" - Setting up GenAI client ...")
+    log_output_path: Path = args().output_report_filepath.parent / "gen-ai-queries"
+    client = GenAIClient(log_output_path=log_output_path, max_tokens=2000)
+
     print(" --- Starting proofreading process ---")
-    report: LatexDocument = doc  # proofread_paper(
-    #    doc, report_output_filepath=args().output_report_filepath
-    # )
+    report: LatexDocument = proofread_paper(client, doc)
 
     print(
         f" --- Writing report (and supporting files) to {args().output_report_filepath} ---"
