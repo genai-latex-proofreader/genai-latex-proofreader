@@ -41,7 +41,14 @@ jobs:
         run: |
           (cd .devcontainer/latex; make in-docker/run-make MAKE_TASK="run-unit-tests")
 
-      - name: Run e2e test and proofread example paper
+      - name: "Run integration tests (with API key)"
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          (cd .devcontainer/latex; make in-docker/run-make MAKE_TASK="run-integration-tests")
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: "e2e integration test: proofread example paper (with API key)"
         if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           (cd .devcontainer/latex; make in-docker/run-make MAKE_TASK="run-e2e-test-proofread-example-paper")

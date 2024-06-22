@@ -4,12 +4,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-
     volumes:
       - ../..:/repo_root
-
     entrypoint: "tail -f /dev/null"
-
     working_dir: /repo_root
-
     hostname: genai-latex-proofreader
+    environment:
+      - ANTHROPIC_API_KEY
