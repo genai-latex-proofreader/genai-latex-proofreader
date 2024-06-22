@@ -1,4 +1,4 @@
-# `genai-latex-proofreader`
+# GenAI LaTeX Proofreader
 
 **GenAI LaTeX Proofreader** is an automated tool that uses generative AI to proofread and suggest improvements to scientific papers written in LaTeX.
 It is primarily intended for authors working on a scientific paper.
@@ -76,7 +76,7 @@ export ANTHROPIC_API_KEY='your-secret-api-key-here'
 
 (Note: do not share your `ANTHROPIC_API_KEY`)
 
-Step 4: Copy files required to build your paper from your directory into the repo directory into the `paper` subdirectory.
+Step 4: Copy files required to build your paper from your directory into the repo directory into the `paper-to-proofread` subdirectory.
 ```bash
 mkdir paper-to-proofread
 cp -R /path/to/your/paper/ paper-to-proofread
