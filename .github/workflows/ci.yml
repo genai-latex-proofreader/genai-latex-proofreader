@@ -42,6 +42,7 @@ jobs:
           (cd .devcontainer/latex; make in-docker/run-make MAKE_TASK="run-unit-tests")
 
       - name: Run e2e test and proofread example paper
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           (cd .devcontainer/latex; make in-docker/run-make MAKE_TASK="run-e2e-test-proofread-example-paper")
 
@@ -49,6 +50,7 @@ jobs:
           find proofreading-report/.
 
       - name: Save proofreading report as artifact
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         uses: actions/upload-artifact@v4
         with:
           name: example-proofreading-report
