@@ -33,36 +33,47 @@ jobs:
         run: |
           (cd .devcontainer/latex; make build)
 
-      # - name: Check static code checking (mypy)
-      #   run: |
-      #     (cd .devcontainer/latex; make in-docker/run-make MAKE_TASK="run-mypy")
+      - name: Check static code checking (mypy)
+        run: |
+          (cd .devcontainer/latex; make in-docker/run-make MAKE_TASK="run-mypy")
 
-      # - name: Run unit tests
-      #   run: |
-      #     (cd .devcontainer/latex; make in-docker/run-make MAKE_TASK="run-unit-tests")
+      - name: Run unit tests
+        run: |
+          (cd .devcontainer/latex; make in-docker/run-make MAKE_TASK="run-unit-tests")
 
       - name: "Run integration tests (with API key)"
-        #if: ${{ github.event_name == 'workflow_dispatch' }}
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           (cd .devcontainer/latex; make in-docker/run-make MAKE_TASK="run-integration-tests")
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
+      - name: "e2e integration test: proofread empty paper (with API key)"
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          (cd .devcontainer/latex; make in-docker/run-make MAKE_TASK="run-e2e-test-proofread-empty-paper")
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Save proofreading report
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: genai-proofreading-report-for-empty-paper
+          path: testing/proofread-empty-paper
+
       - name: "e2e integration test: proofread example paper (with API key)"
         if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           (cd .devcontainer/latex; make in-docker/run-make MAKE_TASK="run-e2e-test-proofread-example-paper")
-
-          # listing all files in output directory
-          find proofreading-report/.
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
-      - name: Save proofreading report as artifact
+      - name: Save proofreading report
         if: ${{ github.event_name == 'workflow_dispatch' }}
         uses: actions/upload-artifact@v4
         with:
-          name: example-proofreading-report
-          path: proofreading-report/
+          name: genai-proofreading-report-for-example-paper
+          path: testing/proofread-example-paper
 
 
