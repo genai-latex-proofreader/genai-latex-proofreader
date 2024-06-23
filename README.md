@@ -106,3 +106,9 @@ Depending on the topic of your paper, you may want to adjust the prompts that de
 Contributions or ideas are welcome!
 
 # License
+
+"GenAI LaTeX Proofreader" is copyright 2024 Matias Dahl (and contributors), and distributed under the terms of the MIT license.
+
+Portions of this work has been developed with the assistance of AI-powered tools.
+
+For details, please see the [LICENSE](LICENSE.md) file.
