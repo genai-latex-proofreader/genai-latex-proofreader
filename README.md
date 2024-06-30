@@ -1,7 +1,7 @@
 # GenAI LaTeX Proofreader
 
 **GenAI LaTeX Proofreader** is an automated tool that uses generative AI to proofread and suggest improvements to scientific papers written in LaTeX.
-The suggestions are appended into the orignal LaTeX source file creating a proofreading report.
+The suggestions are appended into the original LaTeX source file creating a proofreading report.
 This tool is primarily intended for authors working on a scientific paper.
 
 In more detail, the generated proofreading report contains the original paper under review, with a list of suggestions attached to the beginning of each section.
@@ -13,21 +13,29 @@ Here "proofreading" should be interpreted broadly.
 While current large language models (LLMs) have an understanding of logic, mathematics and physics, LLMs should not be trusted for any serious proofreading of scientific results.
 Thus, any suggestions should be evaluated critically.
 
-GenAI LaTeX Proofreader require a subscription to the [Anthropic API](https://www.anthropic.com).
+GenAI LaTeX Proofreader requires a subscription to the [Anthropic API](https://www.anthropic.com).
 
 ### Example proofreading reports
-- TBD
-- TBD
+
+For development and testing, GenAI LaTeX Proofreader is regularly evaluated by proofreading two test papers:
+  - [an empty paper](tests/integration/assets/empty_paper.tex): a paper with no substance.
+  - [arxiv:1108.4207](https://arxiv.org/abs/1108.4207): a preprint of one of my earlier papers.
+
+In more detail, these papers are proofread for all manually triggered CI runs in this repo.
+Thus you can inspect the generated proofreading reports (`report.pdf`) from recent CI pipeline runs on Github:
+   - [example CI run 2024.06.30](https://github.com/genai-latex-proofreader/genai-latex-proofreader/actions/runs/9730918068)
+   - [all runs with generated reports](https://github.com/genai-latex-proofreader/genai-latex-proofreader/actions?query=event%3Aworkflow_dispatch+branch%3Amain)
+   - Note: downloading the generated reports requires that you are logged in to Github.
 
 ## Features
 Completely automated proofreading of LaTeX documents.
-- To create a proofreading report, one only needs to run a Python script. It will make calls to a GenAI API and automatically generate a proofreading report (in pdf format).
+- To create a proofreading report, one only needs to run a Python script, which will make calls to a GenAI API and automatically generate a proofreading report (in pdf format).
 - E.g., if the paper is under version control in GitHub, one can use GitHub runners to automatically generate a proofreading report whenever a new version of the paper is checked in.
 
 ### Supported proofreading personas
 
 #### ✅ Domain expert (implemented)
-- Critically evaluate each section for correctness, clarity. Identify strengths, weaknesses and provide suggestions for future work.
+- Critically evaluate each section for correctness and clarity. Identify strengths, weaknesses and provide suggestions for future work.
 - Also evaluate how well the title, abstract and introduction match the content of the rest of the paper.
 - Implementation with prompts [here](genai_latex_proofreader/genai_proofreader/proofreaders/domain_expert.py).
 
@@ -51,8 +59,7 @@ The idea of using different AI personas for proofreading is introduced in Ethan 
    - Content before the first `\section{..}` will not be proofread.
    - Unnumbered sections are not supported `\section*{..}`.
    - The content of any included files will not be visible to the proofreader.
-- The GenAI will not see or understand any images.
-- The GenAI will not have access to any references.
+- The GenAI will not see or understand any images or references.
 - The proofreading report will not be deterministic. Different runs with the same input document may generate different reports.
 - There are multiple providers that offer access to LLMs, like OpenAI, Anthropic, Google. Currently only Anthropic is supported.
 - Your paper will be sent over the internet to the LLM provider. Please carefully read their terms of service.
@@ -63,7 +70,7 @@ The idea of using different AI personas for proofreading is introduced in Ethan 
 
 # Getting started
 
-Note that this work is an early proof of concept. Thus some familiarity with the development tools (git, Python, Docker, Anthropic API access) may be needed to get this working.
+Note that this work is an early proof of concept, so some familiarity with the development tools (git, Python, Docker, Anthropic API access) may be needed to get this working.
 
 The below steps (for Mac/Linux-based systems) describe how to proofread a paper:
 
@@ -86,7 +93,7 @@ export ANTHROPIC_API_KEY='your-secret-api-key-here'
 
 (Note: do not share your `ANTHROPIC_API_KEY`)
 
-Step 4: Copy files required to build your paper from your directory into the repo directory into the `paper-to-proofread` subdirectory.
+Step 4: Copy the files required to build your paper into the 'paper-to-proofread' subdirectory in the repo.
 ```bash
 mkdir paper-to-proofread
 cp -R /path/to/your/paper/ paper-to-proofread
@@ -119,7 +126,7 @@ Depending on the topic of your paper, you may want to adjust the prompts that de
 **GenAI LaTeX Proofreader** uses GenAI (Generative AI) and large language models (LLM) to automate proofreading of scientific papers.
 As of 2024, GenAI is a quickly evolving technology with rapid developments.
 
-The below list contain some references and related works that may be helpful to learn more about this topic, and more broadly about using AI to advance scientific discovery:
+The below list contains some references and related works about this topic, and more broadly about using AI to make scientific discoveries:
 
 - 12/2023, Microsoft Research, *The Impact of Large Language Models on Scientific Discovery: a Preliminary Study using GPT-4*
     - https://arxiv.org/pdf/2311.07361
@@ -135,7 +142,9 @@ The below list contain some references and related works that may be helpful to 
 
 # Contributions
 
-Contributions or ideas are welcome!
+Contributions, feedback or ideas are welcome!
+
+Feel free to [contact me](https://github.com/matiasdahl) or raise an [issue](https://github.com/genai-latex-proofreader/genai-latex-proofreader/issues) in this repo.
 
 # License
 
