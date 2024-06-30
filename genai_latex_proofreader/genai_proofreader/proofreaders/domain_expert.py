@@ -8,7 +8,7 @@ from ...latex_interface.data_model import (
     SectionRef,
     to_latex,
 )
-from ..formatting import format_report
+from ..formatting import format_report, make_review_comment_header
 
 SYSTEM_PROMPT: str = (
     r"""You are distinguished expert in the areas of <AREAS_OF_EXPERTICE>, with
@@ -57,6 +57,7 @@ Format your proofreading report as follows:
 - Please write up all your findings as a Latex-enumerated list following the structure
   as in the <example_proofread_report> tag below. In particular, your review must begin
   with "\begin{enumerate}" (without the quotes).
+- Use nested enumerate and itemize environments as appropriate.
 - Your proofreading report will be copy-pasted into the paper and then compiled.
   Therefore your report must be valid Latex. Eg. do not write "please use the
   \align environment" since this is not valid Latex.
@@ -94,7 +95,7 @@ Take a deep breath. Remember to be thorough and precise in your proofreading.
 )
 
 
-def proofread_one_section(
+def proofread_one_section_by_expert(
     client: GenAIClient,
     doc: LatexDocument,
     section_ref: ContentReferenceBase,
@@ -102,7 +103,7 @@ def proofread_one_section(
     role = "Domain Expert"
 
     if isinstance(section_ref, PreSectionRef):
-        content_to_review = "Pre-section"
+        # content before the first \section{} is not proofread
         yield from []
         return
 
@@ -141,30 +142,20 @@ def proofread_one_section(
         label=f"{role}: {task}",
     )
 
-    review_header = (
-        (
-            r"\textbf{Role:} \emph{<ROLE>} \\"
-            r"\textbf{Task:} \emph{<TASK>} \\"
-            r"\textbf{Content provided for review:} \emph{<CONTENT_PROVIDED_FOR_REVIEW>}"
-            r"\\ \\"
-        )
-        .replace("<ROLE>", role)
-        .replace("<TASK>", task)
-        .replace("<CONTENT_PROVIDED_FOR_REVIEW>", content_provided_for_review)
-    )
-
     yield section_ref, format_report(
         report=review_reports,
-        review_header=review_header,
+        review_comment_header=make_review_comment_header(
+            role, task, content_provided_for_review
+        ),
         label=f"{role}: {task}",
     )
 
 
-def proofread_abstract_and_intro_vs_paper_content(
+def proofread_title_abstract_and_intro_vs_paper_by_domain_expert(
     client: GenAIClient, doc: LatexDocument
 ) -> Tuple[ContentReferenceBase, str]:
     role = "Domain Expert"
-    task = "Check that the abstract and introduction match the rest of the paper"
+    task = "Check that the title, abstract and introduction match the rest of the paper"
     content_to_review = "Entire paper"
 
     print(f" - Proofreading: {role}: {task}")
@@ -178,24 +169,13 @@ def proofread_abstract_and_intro_vs_paper_content(
             # -
             .replace(
                 "<FOCUS>",
-                "Your only task is to review the abstract and introduction: "
+                "Your only task is to review the title, abstract and introduction: "
                 "Check that these give a good summary of the rest of the paper. "
-                "In your report, treat the abstract and introduction separately. ",
+                "In your report, treat the title, the abstract and introduction "
+                "separately. ",
             )
         ),
         label=f"{role}: {task}",
-    )
-
-    review_header = (
-        (
-            r"\textbf{Role:} \emph{<ROLE>} \\"
-            r"\textbf{Task:} \emph{<TASK>} \\"
-            r"\textbf{Content provided for review:} \emph{<CONTENT_TO_REVIEW>}"
-            r"\\ \\"
-        )
-        .replace("<ROLE>", role)
-        .replace("<TASK>", task)
-        .replace("<CONTENT_TO_REVIEW>", content_to_review)
     )
 
     # This report should be added before the first section
@@ -203,6 +183,6 @@ def proofread_abstract_and_intro_vs_paper_content(
 
     return first_ref, format_report(
         report=intro_and_abstract_report,
-        review_header=review_header,
+        review_comment_header=make_review_comment_header(role, task, content_to_review),
         label=f"{role}: {task}",
     )

@@ -24,30 +24,31 @@ def _make_fix_latex_errors_query(
     label: str, client: GenAIClient, latex_snippet: str, error_messages: str
 ) -> str:
 
-    SYSTEM_PROMPT: str = r"""You are an expert Latex typesetting."""
+    SYSTEM_PROMPT: str = r"""You are an expert in LaTeX typesetting."""
 
     INSTRUCTIONS: str = (
         r"""
-The snippet provided below between <provided-snipped>-tags is from a larger Latex file,
+The snippet provided below between <provided-snipped>-tags is from a larger LaTeX file,
 and it does not compile.
 
-Some latex errors might have been provided between <errors>-tags below.
+Some LaTeX errors might have been provided between <errors>-tags below.
 
 Please correct any errors in the snippet so that it compiles as LaTeX without errors.
-The output should be valid Latex.
+The output should be valid LaTeX.
 
-- Return the snippet with the Latex errors corrected.
-- The snipped will be copy pasted into a larger Latex document so do not add any preamble or document environment.
+- Return the snippet with the LaTeX errors corrected.
+- The snipped will be copy pasted into a larger LaTeX document so do not add any preamble or document environment.
 - Modify the input as little as possible.
+- Do not preface your answer with "Here is the corrected snippet:" or similar comments. Only return the corrected LaTeX.
 - Do not make any other changes or additions to the snippet.
 - Do not explain what changes you made.
 - If there are unmatched curly braces, add/close curly braces as needed based on the context.
 - If there are unmatched environments (eg., \begin{itemize}), then open/close environments as needed based on the context.
 - If commands miss arguments, then fill in suitable dummy values. Eg. correct $1 \frac$ with $1 \frac{?}{?}$.
-- If there are undefined Latex commands, enclose then in \texttt or \mathtt and replace \ with \textbackslash or \backslash.
-- Do not add any new text (not before or after the snippet). Only fix the latex error(s) in the existing text.
+- If there are undefined LaTeX commands, enclose then in \texttt or \mathtt and replace \ with \textbackslash or \backslash.
+- Do not add any new text (not before or after the snippet). Only fix the LaTeX error(s) in the existing text.
 - Do not enclose your response in <snippet>-tags.
-- If the input is valid Latex, return the input as-is without any changes.
+- If the input is valid LaTeX, return the input as-is without any changes.
 
 <provided-snipped>
 <LATEX_SNIPPET_WITH_ERRORS>
@@ -115,7 +116,7 @@ def _latex_guard(
 
 class LatexGuard:
     """
-    GenAI may return invalid latex. This class provide way to catch that and attempt to
+    GenAI may return invalid LaTeX. This class provide way to catch that and attempt to
     fix any LaTeX errors in generated proofreading reports (using the GenAI API client).
     """
 
@@ -140,5 +141,5 @@ class LatexGuard:
 
         return (
             part_ref,
-            "\textbf{Unable Latex errors in the below:}\n \n \n" + content,
+            r"\textbf{Unable LaTeX errors in the below:}\n \n \n" + content,
         )
