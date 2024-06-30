@@ -155,14 +155,29 @@ def _is_comment_line(line: str) -> bool:
     )
 
 
+def _strip_comment(line: str) -> str:
+    """
+    Strip any comments at end of line
+
+    Keeping these in the document may mess up the proofreading comments if they are
+    included in "change <this excerpt> to <this>".
+    """
+    if "%" in line and line.index("%") > 0:
+        return line.split("%")[0]
+    return line
+
+
 def parse_from_latex(
     input_latex: str, supporting_files: dict[Path, bytes] = {}
 ) -> LatexDocument:
     """
     Main interface to parse an input LaTeX document into LatexDocument data model
     """
+
     latex_document: list[str] = [
-        line.strip() for line in input_latex.split("\n") if not _is_comment_line(line)
+        _strip_comment(line).strip()
+        for line in input_latex.split("\n")
+        if not _is_comment_line(line)
     ]
     print(f" - Read {len(latex_document)} lines (after removing comment lines)")
 

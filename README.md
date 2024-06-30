@@ -42,6 +42,7 @@ One can add additional proofreading personas (by editing the code).
 
 ## Limitations
 - Some structure is assumed for the paper. E.g.
+   - Content before the first `\section{..}` will not be proofread.
    - Unnumbered sections are not supported `\section*{..}`.
    - The content of any included files will not be visible to the proofreader.
 - The GenAI will not see or understand any images.

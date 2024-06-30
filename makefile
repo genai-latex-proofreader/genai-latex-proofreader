@@ -45,6 +45,10 @@ run-e2e-test-proofread-example-paper:
 	@#
 	@mkdir -p testing/tmp
 	@curl https://arxiv.org/e-print/1108.4207 | tar -xvzf - --directory=testing/tmp
+	@#
+	@# Paper has no section for introduction. Add this
+	@sed -i '/\\maketitle/a \\\\section{Introduction}' testing/tmp/arxiv-1-frame.tex
+	@#
 	@python3 -m genai_latex_proofreader.cli \
 	    --input_latex_path testing/tmp/arxiv-1-frame.tex \
 	    --output_report_filepath testing/proofread-example-paper/report.tex
