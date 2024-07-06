@@ -7,11 +7,12 @@ This tool is primarily intended for authors working on a scientific paper.
 In more detail, the generated proofreading report contains the original paper under review, with a list of suggestions attached to the beginning of each section.
 For each section, feedback is created from the perspective of different proofreading personas.
 For example, when writing a paper, these could be "Domain expert", "English language expert" and "Book editor".
-However, the personas could also include additional personas such as "Statistical reviewer", "LaTeX specialist" or "Inclusive language expert" depending on the topic of the paper.
+However, the personas could also include additional personas such as "Statistical reviewer", "LaTeX specialist" or "Inclusive language expert" etc depending on the topic of the paper.
 
 Here "proofreading" should be interpreted broadly.
-While current large language models (LLMs) have an understanding of logic, mathematics and physics, LLMs should not be trusted for any serious proofreading of scientific results.
+While current large language models (LLMs) have an understanding of logic, mathematics and physics, LLMs should not be trusted for serious proofreading of scientific results.
 Thus, any suggestions should be evaluated critically.
+On the other hand, for authors familiar with a topic, the generated report can be used to gauge how deeply a LLM can reason about the paper under review.
 
 GenAI LaTeX Proofreader requires a subscription to the [Anthropic API](https://www.anthropic.com).
 
@@ -29,7 +30,8 @@ Thus you can inspect the generated proofreading reports (`report.pdf`) from rece
 
 ## Features
 Completely automated proofreading of LaTeX documents.
-- To create a proofreading report, one only needs to run a Python script, which will make calls to a GenAI API and automatically generate a proofreading report (in pdf format).
+- To create a proofreading report, one only needs to run a Python script, which will make calls to a GenAI API and automatically generate a proofreading report.
+  The comments are automatically inserted into the input LaTeX file and compiled into a pdf.
 - E.g., if the paper is under version control in GitHub, one can use GitHub runners to automatically generate a proofreading report whenever a new version of the paper is checked in.
 
 ### Supported proofreading personas
@@ -49,10 +51,13 @@ Completely automated proofreading of LaTeX documents.
 #### 🚧 LaTeX specialist (not yet implemented)
 - Give feedback on your use of LaTeX.
 
+#### 🚧 Peer review for journal (not yet implemented)
+- See [https://arxiv.org/abs/2310.01783](Arxiv:2310.01783) in references below.
+
 #### 🚧 Custom proofreading personas
 In addition to the above, one can add other proofreading personas. However, this currently requires that one edit the Python source code.
 
-The idea of using different AI personas for proofreading is introduced in Ethan Mollick's book [Co-Intelligence: Living and working with AI](https://www.amazon.com/Co-Intelligence-Living-Working-Ethan-Mollick/dp/059371671X) published 4/2024.
+The idea of using different AI personas for proofreading is inspired by Ethan Mollick's book [Co-Intelligence: Living and working with AI](https://www.amazon.com/Co-Intelligence-Living-Working-Ethan-Mollick/dp/059371671X) published 4/2024.
 
 ## Limitations
 - Some structure is assumed for the paper. E.g.
@@ -145,6 +150,22 @@ The below list contains some references and related works about this topic, and 
 Contributions, feedback or ideas are welcome!
 
 Feel free to [contact me](https://github.com/matiasdahl) or raise an [issue](https://github.com/genai-latex-proofreader/genai-latex-proofreader/issues) in this repo.
+
+# FAQ
+
+### Do I need to cite this work if I use it for a paper?
+
+(This question is outside my area of expertice.)
+
+The guidelines and practices around using AI-content are still evolving.
+However, for publishing work in an academic setting, please first refer to your advisor, department, journal and/or university.
+
+Please also note that:
+- AI generated text may reproduce parts verbatim from its training data.
+- LLM providers may potentially also impose restrictions on usage.
+- GenAI LaTeX Proofreader is distributed under the terms of the MIT license, see details below.
+  This license puts very few restrictions on how this software can be used, and for normal usage the license require no citation.
+
 
 # License
 
