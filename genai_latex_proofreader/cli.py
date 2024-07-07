@@ -1,5 +1,4 @@
 from argparse import ArgumentParser
-from dataclasses import replace
 from pathlib import Path
 
 from .compile_latex import compile_latex, compile_latex_doc
@@ -38,7 +37,7 @@ if __name__ == "__main__":
     # Check that we can parse the main Latex file
     output = compile_latex(files_in_scope, main_file)
 
-    # Check that input Latex document compiles successfully
+    # Check that input LaTeX document compiles successfully
     if output[-1].returncode == 0:
         print(f"Input LaTeX document {main_file} compiled successfully [OK]")
     else:
@@ -55,12 +54,23 @@ if __name__ == "__main__":
     print("--- Summary ---")
     print(to_summary(doc))
 
-    print(" --- Testing that input compiles ---")
+    print(" --- Testing that parsed input LaTeX document compiles ---")
     output = compile_latex_doc(doc, Path("report.tex"))
     write_directory(
         files=output[-1].output_files,
-        directory=args().output_report_filepath.parent / "input",
+        directory=args().output_report_filepath.parent / "compiled_input",
     )
+    if output[-1].returncode == 0:
+        print(
+            f"Input LaTeX document {main_file} compiled successfully after parsing [OK]"
+        )
+    else:
+        raise Exception(
+            f"Input LaTeX document {main_file} did not compile successfully after parsing. Please inspect files in <output-dir>/compiled_input [FAIL]:\n"
+            f" - returncode: {output[-1].returncode}\n"
+            f" - stdout: {output[-1].stdout}\n"
+            f" - stderr: {output[-1].stderr}\n"
+        )
 
     print(" - Setting up GenAI client ...")
     log_output_path: Path = args().output_report_filepath.parent / "gen-ai-queries"
