@@ -81,8 +81,16 @@ def _latex_guard(
     content_ref: ContentReferenceBase,
     content: str,
 ) -> str:
+    print("Latext guard")
     # unmodified document should not have errors
-    assert _doc_compiles(doc).returncode == 0
+    if (input_run := _doc_compiles(doc)).returncode != 0:
+        raise Exception(
+            f"latex guard: input does not compile \n"
+            f"returncode  :  {input_run.returncode} \n"
+            f"stdout      :  {input_run.stdout} \n"
+            f"stderr      :  {input_run.stderr} \n"
+        )
+    del input_run
 
     # add new content into input document;
     #  - Surround modified content with "\typeout{<RUN_ID>}" Latex commands.

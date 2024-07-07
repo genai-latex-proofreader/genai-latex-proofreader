@@ -28,9 +28,11 @@ def proofread_paper(client: GenAIClient, doc: LatexDocument) -> LatexDocument:
     def _get_reports():
 
         # Language expert: proofread abstract
-        yield (
-            PreSectionRef(in_appendix=False),
-            proofread_abstract_for_language(client, doc),
+        yield latex_guard(
+            (
+                PreSectionRef(in_appendix=False),
+                proofread_abstract_for_language(client, doc),
+            )
         )
 
         # Domain expert: check abstract vs paper content
@@ -38,9 +40,12 @@ def proofread_paper(client: GenAIClient, doc: LatexDocument) -> LatexDocument:
             proofread_title_abstract_and_intro_vs_paper_by_domain_expert(client, doc)
         )
 
-        yield (
-            PreSectionRef(in_appendix=False),
-            project_plug(),
+        # LaTeX guard should not be necessary since plug is a constant.
+        yield latex_guard(
+            (
+                PreSectionRef(in_appendix=False),
+                project_plug(),
+            )
         )
 
         # Language + Domain experts: review each section
