@@ -101,14 +101,14 @@ export ANTHROPIC_API_KEY='your-secret-api-key-here'
 Step 4: Copy the files required to build your paper into the 'paper-to-proofread' subdirectory in the repo.
 ```bash
 mkdir paper-to-proofread
-cp -R /path/to/your/paper/ paper-to-proofread
+cp -R /path/to/your/paper/. paper-to-proofread
 ```
 
 For testing you can use a dummy paper `tests/integration/assets/empty_paper.tex` provided in the repo.
 
 ```bash
 mkdir paper-to-proofread
-cp -R tests/integration/assets/ paper-to-proofread/
+cp -R tests/integration/assets/. paper-to-proofread/
 ```
 
 (Note: Please always have a backup of your paper.)
