@@ -61,7 +61,7 @@ ENV PATH=${PATH}:/usr/local/texlive/2024/bin/aarch64-linux/
 #  - https://www.ctan.org/pkg/pgf
 RUN tlmgr install collection-fontsrecommended   # installs rsfs
 RUN tlmgr install jknapltx stmaryrd             # is jknapltx needed?
-RUN tlmgr install tensor tikz-cd pgf float
+RUN tlmgr install tensor tikz-cd pgf float changepage
 
 # --- Install Python for checking the paper/results with LLM ---
 RUN apt-get install -qq -y --no-install-recommends \
