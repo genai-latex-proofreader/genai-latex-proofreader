@@ -81,7 +81,6 @@ def _latex_guard(
     content_ref: ContentReferenceBase,
     content: str,
 ) -> str:
-    print("Latext guard")
     # unmodified document should not have errors
     if (input_run := _doc_compiles(doc)).returncode != 0:
         raise Exception(
@@ -103,7 +102,6 @@ def _latex_guard(
     modified_latex = add_comments(doc, content_ref, new_lines)
 
     if (out := _doc_compiles(modified_latex)).returncode == 0:
-        # No changes needed, the modified document compiles without errors
         return content
 
     else:
@@ -136,8 +134,12 @@ class LatexGuard:
     def __call__(
         self, x: Tuple[ContentReferenceBase, str]
     ) -> Tuple[ContentReferenceBase, str]:
+        print("LaTeX guard: Checking that generated content is valid LaTeX")
         part_ref, content = x
-        for _ in range(self.retries):
+        for retry in range(self.retries):
+            if retry > 0:
+                print(f"LaTeX guard retry {retry + 1} of {self.retries}")
+
             content = _latex_guard(self.client, self.doc, part_ref, content)
             if (
                 _doc_compiles(
@@ -145,8 +147,13 @@ class LatexGuard:
                 ).returncode
                 == 0
             ):
+                if retry == 0:
+                    print("LaTeX guard: generated content compiles as is")
+                else:
+                    print("LaTeX guard: generated content fixed")
                 return part_ref, content
 
+        print("LaTeX guard: Unable to fix problems in generated content")
         return (
             part_ref,
             r"\textbf{Unable LaTeX errors in the below:}\n \n \n" + content,

@@ -56,7 +56,7 @@ class GenAIClient:
         response = make_query(system_prompt, user_prompt, self.max_tokens)
 
         # make filename more friendly for filesystems
-        for char in [" ", ":", "'", '"']:
+        for char in [" ", ":", "'", '"', "$", "{", "}", "\\", "/", "^"]:
             label = label.replace(char, "_")
 
         while "__" in label:
