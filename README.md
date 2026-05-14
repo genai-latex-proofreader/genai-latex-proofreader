@@ -1,3 +1,9 @@
+# 🚨 Update 2026-05 🚨
+
+- **⚠️ Active development moved to https://github.com/genai-latex-proofreader/latexq**
+
+---
+
 # GenAI LaTeX Proofreader
 
 **GenAI LaTeX Proofreader** is an automated tool that uses generative AI to proofread and suggest improvements to scientific papers written in LaTeX.
