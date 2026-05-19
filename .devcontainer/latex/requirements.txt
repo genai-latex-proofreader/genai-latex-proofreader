@@ -6,7 +6,7 @@ pytest==8.2.1
 
 # 'black'Python package used by "ms-python.black-formatter" (as of 2024.05.25)
 # https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter
-black==24.4.2
+black==26.3.1
 
 # 'mypy' Python package used by "ms-python.mypy-type-checker" (as of 2024.05.26)
 # https://marketplace.visualstudio.com/items?itemName=ms-python.mypy-type-checker
